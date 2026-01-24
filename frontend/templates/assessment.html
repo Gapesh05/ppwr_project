@@ -1,0 +1,3935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <style>
+      /* PPWR Bulk Action Buttons Theming - Refined for Page Theme */
+      #ppwrBulkActions {
+        background: linear-gradient(90deg, #ede9fe 0%, #e0e7ff 100%);
+        border-radius: 14px;
+        padding: 20px 20px 14px 20px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 16px rgba(80, 80, 180, 0.07);
+      }
+      #ppwrBulkActions .ppwr-btn {
+        border-radius: 12px !important;
+        font-size: 1.08em;
+        font-weight: 600;
+        min-width: 140px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(80,80,180,0.10);
+        border: none;
+        margin-right: 8px;
+        transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+        letter-spacing: 0.01em;
+      }
+      #ppwrBulkActions .ppwr-btn-evaluate {
+        background: linear-gradient(90deg, #6366f1 0%, #7c3aed 100%);
+        color: #fff;
+      }
+      #ppwrBulkActions .ppwr-btn-evaluate:hover {
+        background: linear-gradient(90deg, #7c3aed 0%, #6366f1 100%);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(80,80,180,0.18);
+      }
+      #ppwrBulkActions .ppwr-btn-delete {
+        background: linear-gradient(90deg, #f43f5e 0%, #be185d 100%);
+        color: #fff;
+      }
+      #ppwrBulkActions .ppwr-btn-delete:hover {
+        background: linear-gradient(90deg, #be185d 0%, #f43f5e 100%);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(244,63,94,0.18);
+      }
+      #ppwrBulkActions .ppwr-btn-download {
+        background: linear-gradient(90deg, #38bdf8 0%, #6366f1 100%);
+        color: #fff;
+      }
+      #ppwrBulkActions .ppwr-btn-download:hover {
+        background: linear-gradient(90deg, #6366f1 0%, #38bdf8 100%);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(56,189,248,0.18);
+      }
+      #ppwrBulkActions label, #ppwrBulkActions #ppwrSelectedCount {
+        font-size: 1.09em;
+        font-weight: 500;
+      }
+
+      /* New PPWR button styles */
+      .ppwr-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-size: 1em;
+        font-weight: 500;
+        transition: background 0.2s, transform 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .ppwr-btn i {
+        font-size: 1.2em;
+        line-height: 1;
+      }
+      .ppwr-btn:hover {
+        transform: translateY(-1px);
+      }
+      .ppwr-btn:active {
+        transform: translateY(0);
+      }
+
+      .ppwr-btn-evaluate {
+        background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+        color: white;
+      }
+      .ppwr-btn-delete {
+        background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+        color: white;
+      }
+      .ppwr-btn-download {
+        background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+        color: white;
+      }
+
+      /* Elegant pill badges for PPWR mapping - smaller size */
+      .ppwr-badge-mapped {
+        background: linear-gradient(135deg, #d1fae5 0%, #34d399 100%);
+        color: #065f46;
+        border: 1px solid #10b981;
+        border-radius: 16px;
+        font-weight: 600;
+        padding: 3px 12px;
+        font-size: 0.88rem;
+        box-shadow: 0 1px 4px rgba(16,185,129,0.10);
+        display: inline-block;
+        letter-spacing: 0.01em;
+      }
+      .ppwr-badge-unmapped {
+        background: linear-gradient(135deg, #fee2e2 0%, #f87171 100%);
+        color: #991b1b;
+        border: 1px solid #ef4444;
+        border-radius: 16px;
+        font-weight: 600;
+        padding: 3px 12px;
+        font-size: 0.88rem;
+        box-shadow: 0 1px 4px rgba(239,68,68,0.10);
+        display: inline-block;
+        letter-spacing: 0.01em;
+      }
+
+      /* PPWR results hero styling (for evaluation output) */
+      #ppwrResultsSection {
+        display: none;
+      }
+      .ppwr-hero {
+        background: radial-gradient(circle at 10% 20%, #eef2ff, #f8fafc 40%, #ffffff 85%);
+        border-radius: 18px;
+        padding: 18px 22px;
+        box-shadow: 0 8px 28px rgba(76, 29, 149, 0.08);
+        border: 1px solid #e5e7eb;
+      }
+      .ppwr-metric-card {
+        border-radius: 14px;
+        padding: 16px 18px;
+        background: linear-gradient(135deg, #fff 0%, #f5f3ff 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 30px rgba(79,70,229,0.08);
+        height: 100%;
+      }
+      .ppwr-metric-label { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.9rem; color: #6366f1; font-weight: 700; }
+      .ppwr-metric-value { font-size: 1.9rem; font-weight: 800; color: #0f172a; }
+      .ppwr-metric-sub { color: #475569; font-size: 0.95rem; }
+      .ppwr-status-pill { border-radius: 999px; padding: 6px 12px; font-weight: 700; }
+      .ppwr-status-pill.good { background: #dcfce7; color: #15803d; }
+      .ppwr-status-pill.bad { background: #fee2e2; color: #b91c1c; }
+      #ppwrEvalLoading { display:none; }
+      </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PFAS Assessment - {{ product_name or sku }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    /* === GLOBAL TEXT SIZE BOOST === */
+    html { font-size: 15px; }
+    @media (max-width: 768px) { html { font-size: 16px; } }
+    body {
+      background-color: #f8fafc;
+      color: #212529;
+      font-family: 'Segoe UI', sans-serif;
+      line-height: 1.6;
+    }
+
+    /* Cards & Containers */
+    .card-shadow {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    .card-shadow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    /* Enhanced Gradient Header */
+    .bg-gradient-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 16px 16px 0 0;
+      padding: 1.5rem;
+    }
+
+    /* Enhanced Summary Cards */
+    .pfas-summary .summary-card {
+      border-radius: 14px;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+      border: 1px solid #e5e7eb;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pfas-summary .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3B82F6, #8C69F0);
+      border-radius: 14px 14px 0 0;
+    }
+
+    .pfas-summary .summary-card:hover {
+      background: linear-gradient(135deg, #f0f9ff 0%, #f9f5ff 100%);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Status-based card colors */
+    .summary-card.files-card::before {
+      background: linear-gradient(90deg, #06b6d4, #0891b2);
+    }
+    .summary-card.review-card::before {
+      background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+    }
+
+    /* Enhanced metric displays */
+    .metric-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .files-icon {
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+    }
+    
+    .review-icon {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .metric-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(249, 250, 251, 0.7);
+    }
+
+    .detail-item.success { background: rgba(34, 197, 94, 0.1); color: #166534; }
+    .detail-item.danger { background: rgba(239, 68, 68, 0.1); color: #991b1b; }
+    .detail-item.warning { background: rgba(245, 158, 11, 0.1); color: #92400e; }
+    .detail-item.info { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
+
+    /* Enhanced Table Controls with Region Filter */
+    .table-controls {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .search-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      flex-grow: 1;
+      max-width: 350px;
+    }
+
+    .region-filter-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .region-select {
+      min-width: 200px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      transition: all 0.2s ease;
+    }
+
+    .region-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      outline: none;
+    }
+
+    .search-input {
+      flex-grow: 1;
+      padding: 0.55rem 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      outline: none;
+    }
+
+    /* Region indicator */
+    .region-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    /* Enhanced buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #3B82F6, #1d4ed8);
+      border: none;
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Table enhancements */
+    table.table {
+      border-radius: 12px;
+      overflow: hidden;
+      font-size: 1rem;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    table.table th {
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    table.table th:hover {
+      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    }
+    table.table th .sort-icon {
+      opacity: 0.4;
+      font-size: 0.8rem;
+      margin-left: 6px;
+    }
+    table.table th.sort-asc .sort-icon::after { content: '▲'; opacity: 1; }
+    table.table th.sort-desc .sort-icon::after { content: '▼'; opacity: 1; }
+    table.table tbody tr {
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    table.table tbody tr:hover {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      transform: translateX(2px);
+    }
+
+    /* Enhanced badges */
+    .badge {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      margin: 2px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-danger {
+      background: linear-gradient(135deg, #fecaca, #fca5a5);
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+    .badge-success {
+      background: linear-gradient(135deg, #bbf7d0, #86efac);
+      color: #166534;
+      border: 1px solid #4ade80;
+    }
+    .badge-warning {
+      background: linear-gradient(135deg, #fed7aa, #fdba74);
+      color: #92400e;
+      border: 1px solid #fb923c;
+    }
+
+    /* Results counter */
+    .results-counter {
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      border: 1px solid #cbd5e1;
+      border-radius: 0 0 12px 12px;
+      border-top: none;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: #64748b;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Result rows differentiation */
+    #pfasTableBody tr.data-row {
+      background: #ffffff;
+      border-top: 2px solid #f3f4f6;
+    }
+    #pfasTableBody tr.data-row:nth-child(even) {
+      background: #f9fafb;
+    }
+    #pfasTableBody tr.detail-row {
+      background: #fdfdfd;
+    }
+    #pfasTableBody tr.detail-row td {
+      border-top: none;
+    }
+
+    #ppwrTableBody tr.data-row {
+      background: #ffffff;
+      border-top: 2px solid #f3f4f6;
+    }
+    #ppwrTableBody tr.data-row:nth-child(even) {
+      background: #f9fafb;
+    }
+    #ppwrTableBody tr.detail-row {
+      background: #fdfdfd;
+    }
+    #ppwrTableBody tr.detail-row td {
+      border-top: none;
+    }
+
+    /* Loading states */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      backdrop-filter: blur(2px);
+    }
+
+    .spinner-border {
+      color: #3b82f6;
+    }
+
+    .pagination-btn {
+      padding: 0.4rem 0.7rem;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .pagination-btn:hover {
+      background: #f8f9fa;
+    }
+  </style>
+  <style>
+    /* Multi-upload modal styles */
+    .mu-file-row { display:flex; align-items:center; gap:12px; padding:8px; }
+    .mu-file-meta { flex: 1 1 auto; }
+    .mu-progress { width: 100%; height: 8px; border-radius: 6px; overflow: hidden; background: #eef2ff; }
+    .mu-progress > div { height: 100%; background: linear-gradient(90deg,#34d399,#3b82f6); width:0%; }
+    .mu-file-actions { flex: 0 0 auto; display:flex; gap:6px; }
+    .mu-file-name { font-weight:600; font-size:0.95rem; }
+    .mu-drop-zone { border: 2px dashed #94a3b8; border-radius: 10px; padding: 16px; text-align: center; color: #475569; background: #f8fafc; cursor: pointer; }
+    .mu-drop-zone .hint { font-size: 0.9rem; color: #64748b; }
+    .mu-drop-hover { background: #eff6ff; border-color: #60a5fa; color: #1d4ed8; }
+  </style>
+    <!-- Fallback CSS for tabs when Bootstrap CSS/JS is unavailable -->
+    <style id="tab-fallback-css">
+      .tab-pane { display: none; }
+      .tab-pane.show.active { display: block; }
+    </style>
+</head>
+<body data-sku="{{ sku|e }}" data-product-name="{{ (product_name or '')|e }}">
+<script>
+  // Initialize globals as early as possible to avoid ReferenceError
+  (function(){
+    try {
+      var ds = (document.body && document.body.dataset) ? document.body.dataset : {};
+      if (typeof window.SKU === 'undefined' || !window.SKU) { window.SKU = ds.sku || ''; }
+      if (typeof window.PRODUCT_NAME === 'undefined' || !window.PRODUCT_NAME) { window.PRODUCT_NAME = ds.productName || ''; }
+    } catch(_) {}
+  })();
+</script>
+<div class="container-fluid px-4 py-4">
+  <div class="card-shadow">
+    <div class="bg-gradient-header d-flex justify-content-between align-items-center">
+      <h3 id="assessmentTitle" class="mb-1">
+        Assessment: {{ product_name or sku }}
+        <span id="regionIndicator" class="region-indicator" style="display: none;">
+          <i class="bi bi-geo-alt"></i>
+          <span id="regionText">All Regions</span>
+        </span>
+      </h3>
+      <a href="/" class="btn btn-light">← Back to Products</a>
+    </div>
+    <div class="p-4">
+      <!-- NAV TABS -->
+      <ul class="nav nav-tabs mb-4" role="tablist" aria-label="Assessment tabs">
+        <li class="nav-item" role="presentation">
+          <button id="pfasTabBtn" class="nav-link active" data-bs-toggle="tab" data-bs-target="#pfasTab" type="button" role="tab" aria-controls="pfasTab" aria-selected="true">PFAS Assessment</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button id="rohsTabBtn" class="nav-link" data-bs-toggle="tab" data-bs-target="#rohsTab" type="button" role="tab" aria-controls="rohsTab" aria-selected="false">RoHS Assessment</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button id="reachTabBtn" class="nav-link" data-bs-toggle="tab" data-bs-target="#reachTab" type="button" role="tab" aria-controls="reachTab" aria-selected="false">REACH Assessment</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button id="ppwrTabBtn" class="nav-link" data-bs-toggle="tab" data-bs-target="#ppwrTab" type="button" role="tab" aria-controls="ppwrTab" aria-selected="false">PPWR Assessment</button>
+        </li>
+      </ul>
+
+      <script>
+        (function(){
+          try {
+            // Direct tab click binder - ensures tab buttons always activate panes
+            document.querySelectorAll('.nav-tabs button[data-bs-target]').forEach(btn => {
+              if (btn.__ppas_direct_bound) return;
+              btn.__ppas_direct_bound = true;
+              btn.addEventListener('click', function (ev) {
+                try {
+                  const sel = btn.getAttribute('data-bs-target');
+                  if (!sel) return;
+                  // update active state on buttons
+                  document.querySelectorAll('.nav-tabs button[data-bs-target]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+                  btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+                  // show associated pane
+                  document.querySelectorAll('.tab-pane').forEach(p => { p.classList.remove('show','active'); });
+                  const pane = document.querySelector(sel);
+                  if (pane) pane.classList.add('show','active');
+                  // persist tab in URL (best-effort)
+                  try { const url = new URL(window.location); url.searchParams.set('tab', (sel||'').replace('#','')); window.history.replaceState({}, '', url); } catch(_) {}
+                } catch(_) {}
+              }, { passive: true });
+            });
+          } catch (_) {}
+        })();
+      </script>
+
+      <div class="tab-content">
+        <div class="tab-pane fade {% if active_tab == 'pfas' %}show active{% endif %}" id="pfasTab" role="tabpanel" aria-labelledby="pfasTabBtn">
+          {% if active_tab == 'pfas' and not is_valid_tab %}
+            <!-- Eligibility Screen for PFAS -->
+            <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+              <div class="text-center">
+                <i class="bi bi-shield-exclamation text-warning" style="font-size: 5rem;"></i>
+                <h2 class="fw-bold mb-3 mt-3">You Are Not Eligible for This Assessment</h2>
+                <p class="text-muted mb-4">This product is configured for <strong class="text-uppercase">{{ actual_route }}</strong> assessment.</p>
+                <a href="{{ url_for('assessment_page', sku=sku, tab=actual_route) }}" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right-circle"></i> Go to {{ actual_route|upper }} Assessment
+                </a>
+              </div>
+            </div>
+          {% elif active_tab == 'pfas' %}
+          
+          <!-- Enhanced Table Controls with Region Filter -->
+          <div class="table-controls">
+            <div class="search-wrapper">
+              <input type="text" id="searchInput" class="search-input" placeholder="Search materials, chemicals, suppliers...">
+              <button class="btn btn-primary" id="searchButton">
+                <i class="bi bi-search"></i>
+              </button>
+              
+              <!-- Accessibility: provide title/aria-label for icon-only search button -->
+              <script>
+                (function(){
+                  const b = document.getElementById('searchButton'); if (b) { b.setAttribute('title','Search'); b.setAttribute('aria-label','Search'); }
+                })();
+              </script>
+            </div>
+            
+            <div class="region-filter-wrapper">
+              <label for="regionFilter" class="mb-0">
+                <i class="bi bi-geo-alt"></i> Filter by Region:
+              </label>
+              <select id="regionFilter" class="region-select">
+                <option value="all">All Regions</option>
+                <!-- Options will be populated dynamically -->
+              </select>
+              <button id="clearRegionFilter" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-lg"></i> Clear
+              </button>
+            </div>
+            
+            <div class="d-flex align-items-center">
+              <button id="exportBtn" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-download"></i> Export
+              </button>
+            </div>
+          </div>
+
+          <!-- Enhanced Summary Cards -->
+          <div class="row g-3 mb-4 pfas-summary">
+              <!-- Evaluation Metrics Box -->
+              <div class="col-md-12">
+                  <div class="summary-card review-card h-100" style="position: relative;">
+                      <div id="reviewCardLoader" class="loading-overlay" style="display: none;">
+                          <div class="spinner-border" role="status"></div>
+                      </div>
+                      <!-- Card Title -->
+                      <div class="card-title">
+                          <h5 class="mb-0">Evaluation Metrics</h5>
+                      </div>
+                      <div class="metric-display">
+                          <div class="metric-icon review-icon">
+                              <i class="bi bi-clipboard-check"></i>
+                          </div>
+                          <div>
+                              <div class="metric-value">{{ summary_stats.files_total or 0 }}</div>
+                              <div class="metric-details">
+                                  <div class="detail-item success">
+                                      <span>Compliance</span>
+                                      <span>{{ summary_stats.in_conformance or 0 }}</span>
+                                  </div>
+                                  <div class="detail-item danger">
+                                      <span>Non-Compliance</span>
+                                      <span>{{ summary_stats.non_conforming or 0 }}</span>
+                                  </div>
+                                  <div class="detail-item warning">
+                                      <span>Incomplete</span>
+                                      <span>{{ summary_stats.no_chemical_data or 0 }}</span>
+                                  </div>
+                                  <div class="detail-item info">
+                                      <span>Missing Documents</span>
+                                      <span>{{ summary_stats.progress_text or 0 }}</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                              <!-- PPWR Assessment Evaluation Modal (only for PPWR) -->
+                              <div class="modal fade" id="ppwrAssessmentModal" tabindex="-1" aria-labelledby="ppwrAssessmentModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <h5 class="modal-title" id="ppwrAssessmentModalLabel">PPWR Assessment Evaluation</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body" style="padding:0;">
+                                      <iframe src="/ppwr/evaluation" title="PPWR Evaluation" style="width:100%;height:680px;border:0;min-height:400px;border-radius:0 0 12px 12px;"></iframe>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Main Table -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Material</th>
+                  <th>Supplier</th>
+                  <th>Chemical</th>
+                  <th>Concentration</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pfasTableBody">
+                {% for item in initial_data.data %}
+                <tr class="data-row" data-index="{{ loop.index0 }}" data-material="{{ item.material }}">
+                  <td>
+                    <div><strong>{{ item.component or '-' }}</strong></div>
+                    <div class="small text-muted">{{ item.subcomponent or '-' }}</div>
+                  </td>
+                  <td>
+                    <div>{{ item.material_name or '-' }}</div>
+                    <div class="small text-muted">{{ item.material or '-' }}</div>
+                  </td>
+                  <td>{{ item.supplier_name or 'No Data' }}</td>
+                  <td>
+                    <div>{{ item.chemical_name or 'No Data' }}</div>
+                    <div class="small text-muted">{{ item.cas_number or '-' }}</div>
+                  </td>
+                  <td>{{ item.concentration or 'No Data' }}</td>
+                  <td>
+                    <span class="badge badge-{{ item.status_color }}">
+                      {{ item.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary" data-action="toggle" data-index="{{ loop.index0 }}" title="Expand">
+                      <i class="bi bi-chevron-down"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Detail Row -->
+                <tr class="detail-row" id="detail-{{ loop.index0 }}" style="display: none;">
+                  <td colspan="7">
+                    <div class="p-3 bg-light rounded">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <strong>Reference Document:</strong> {{ item.reference_doc or '—' }}<br>
+                          <strong>Material ID:</strong> {{ item.material or '—' }}
+                        </div>
+                        <div class="col-md-6">
+                          {% if item.limits %}
+                          <div class="mt-2">
+                            <strong>Regulation Limits:</strong><br>
+                            {% for limit in item.limits %}
+                            <span class="badge badge-{{ limit.color }} me-1">
+                              {{ limit.name }}: {{ limit.limit }}
+                            </span>
+                            {% endfor %}
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Results Counter -->
+          <div class="mt-3 mb-2 d-flex gap-2 align-items-center">
+            <!-- Bulk-upload row selectors removed; uploads are handled per-row via modal -->
+          </div>
+          <div class="results-counter">
+            Showing {{ initial_data.data|length if initial_data.data else 0 }} results
+          </div>
+          
+          {% endif %}
+        </div>
+        
+        <!-- RoHS Tab -->
+        <div class="tab-pane fade {% if active_tab == 'rohs' %}show active{% endif %}" id="rohsTab" role="tabpanel" aria-labelledby="rohsTabBtn">
+          {% if active_tab == 'rohs' and not is_valid_tab %}
+            <!-- Eligibility Screen for RoHS -->
+            <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+              <div class="text-center">
+                <i class="bi bi-shield-exclamation text-warning" style="font-size: 5rem;"></i>
+                <h2 class="fw-bold mb-3 mt-3">You Are Not Eligible for This Assessment</h2>
+                <p class="text-muted mb-4">This product is configured for <strong class="text-uppercase">{{ actual_route }}</strong> assessment.</p>
+                <a href="{{ url_for('assessment_page', sku=sku, tab=actual_route) }}" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right-circle"></i> Go to {{ actual_route|upper }} Assessment
+                </a>
+              </div>
+            </div>
+          {% elif active_tab == 'rohs' %}
+            <!-- RoHS Content (Coming Soon) -->
+            <div class="text-center py-5">
+              <i class="bi bi-tools" style="font-size: 3rem; color: #6c757d;"></i>
+              <h4 class="mt-3">RoHS Assessment</h4>
+              <p class="text-muted">Coming soon...</p>
+            </div>
+          {% else %}
+            <!-- Default when not active -->
+            <div class="text-center py-5">
+              <i class="bi bi-tools" style="font-size: 3rem; color: #6c757d;"></i>
+              <h4 class="mt-3">RoHS Assessment</h4>
+              <p class="text-muted">Coming soon...</p>
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- REACH Tab -->
+        <div class="tab-pane fade {% if active_tab == 'reach' %}show active{% endif %}" id="reachTab" role="tabpanel" aria-labelledby="reachTabBtn">
+          {% if active_tab == 'reach' and not is_valid_tab %}
+            <!-- Eligibility Screen for REACH -->
+            <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+              <div class="text-center">
+                <i class="bi bi-shield-exclamation text-warning" style="font-size: 5rem;"></i>
+                <h2 class="fw-bold mb-3 mt-3">You Are Not Eligible for This Assessment</h2>
+                <p class="text-muted mb-4">This product is configured for <strong class="text-uppercase">{{ actual_route }}</strong> assessment.</p>
+                <a href="{{ url_for('assessment_page', sku=sku, tab=actual_route) }}" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right-circle"></i> Go to {{ actual_route|upper }} Assessment
+                </a>
+              </div>
+            </div>
+          {% elif active_tab == 'reach' %}
+            <!-- REACH Content (Coming Soon) -->
+            <div class="text-center py-5">
+              <i class="bi bi-tools" style="font-size: 3rem; color: #6c757d;"></i>
+              <h4 class="mt-3">REACH Assessment</h4>
+              <p class="text-muted">Coming soon...</p>
+            </div>
+          {% else %}
+            <!-- Default when not active -->
+            <div class="text-center py-5">
+              <i class="bi bi-tools" style="font-size: 3rem; color: #6c757d;"></i>
+              <h4 class="mt-3">REACH Assessment</h4>
+              <p class="text-muted">Coming soon...</p>
+            </div>
+          {% endif %}
+        </div>
+       
+        <!-- PPWR Tab -->
+        <div class="tab-pane fade {% if active_tab == 'ppwr' %}show active{% endif %}" id="ppwrTab" role="tabpanel" aria-labelledby="ppwrTabBtn">
+          {% if active_tab == 'ppwr' and not is_valid_tab %}
+            <!-- Eligibility Screen for PPWR -->
+            <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+              <div class="text-center">
+                <i class="bi bi-shield-exclamation text-warning" style="font-size: 5rem;"></i>
+                <h2 class="fw-bold mb-3 mt-3">You Are Not Eligible for This Assessment</h2>
+                <p class="text-muted mb-4">This product is configured for <strong class="text-uppercase">{{ actual_route }}</strong> assessment.</p>
+                <a href="{{ url_for('assessment_page', sku=sku, tab=actual_route) }}" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-right-circle"></i> Go to {{ actual_route|upper }} Assessment
+                </a>
+              </div>
+            </div>
+          {% elif active_tab == 'ppwr' %}
+          
+          <!-- Enhanced Table Controls with Region Filter -->
+          <div class="table-controls">
+            <div class="search-wrapper">
+              <input type="text" id="searchInput1" class="search-input" placeholder="Search materials, chemicals, suppliers...">
+              <button class="btn btn-primary" id="searchButton1">
+                <i class="bi bi-search"></i>
+              </button>
+              <script>
+                (function(){
+                  const b = document.getElementById('searchButton1'); if (b) { b.setAttribute('title','Search'); b.setAttribute('aria-label','Search'); }
+                })();
+              </script>
+            </div>
+            
+            <div class="region-filter-wrapper">
+              <label for="regionFilter1" class="mb-0">
+                <i class="bi bi-geo-alt"></i> Filter by Region:
+              </label>
+              <select id="regionFilter1" class="region-select">
+                <option value="all">All Regions</option>
+                <!-- Options will be populated dynamically -->
+              </select>
+              <button id="clearRegionFilter1" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-lg"></i> Clear
+              </button>
+            </div>
+            
+            <div class="d-flex align-items-center">
+              <button id="exportBtn1" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-download"></i> Export
+              </button>
+            </div>
+          </div>
+
+          <!-- PPWR Batch Action Bar: Evaluate / Delete / Clear selected rows -->
+          <div id="ppwr-action-bar" class="d-flex gap-2 align-items-center mb-3" style="display:none;">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="ppwr-select-all-top" />
+              <label class="form-check-label small text-muted" for="ppwr-select-all-top">Select all visible</label>
+            </div>
+            
+            <button class="ppwr-btn ppwr-btn-delete" id="ppwrBulkDelete">Delete</button>
+            <button class="ppwr-btn ppwr-btn-download" id="ppwrBulkDownload">Download</button>
+            <!-- Keep single Evaluate anchor that opens the full evaluation page -->
+            <a id="EvaluateBtn" href="/ppwr/evaluation" class="btn btn-primary ms-2" title="Open full PPWR evaluation">Evaluate</a>
+            <span class="ms-3 text-muted" id="ppwrSelectedCount" style="font-size:1.08em;font-weight:500;">0 selected</span>
+          </div>
+
+      <!-- PPWR Evaluation Results (hidden until Evaluate is clicked) -->
+      <div id="ppwrEvalLoading" class="alert alert-info d-flex align-items-center gap-2" role="alert">
+        <div class="spinner-border spinner-border-sm" role="status"></div>
+        <div>Running PPWR assessments via LLM/Chroma…</div>
+      </div>
+
+      <div id="ppwrResultsSection" class="mt-3">
+        <div class="ppwr-hero mb-3">
+          <div class="row g-3">
+            <div class="col-md-3 col-6">
+              <div class="ppwr-metric-card">
+                <div class="ppwr-metric-label">Total Materials</div>
+                <div class="ppwr-metric-value" id="ppwrMetricTotal">0</div>
+                <div class="ppwr-metric-sub">From current BOM</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="ppwr-metric-card">
+                <div class="ppwr-metric-label">Evaluated</div>
+                <div class="ppwr-metric-value" id="ppwrMetricEvaluated">0</div>
+                <div class="ppwr-metric-sub">LLM/Chroma processed</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="ppwr-metric-card">
+                <div class="ppwr-metric-label">Non-Conformance</div>
+                <div class="ppwr-metric-value text-danger" id="ppwrMetricNon">0</div>
+                <div class="ppwr-metric-sub">Restricted substances present</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="ppwr-metric-card">
+                <div class="ppwr-metric-label">Conformance</div>
+                <div class="ppwr-metric-value text-success" id="ppwrMetricYes">0</div>
+                <div class="ppwr-metric-sub">Clear of restrictions</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-shadow">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <strong>PPWR Assessment Results</strong>
+            <span class="text-muted small">Rendered after Evaluate</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Component</th>
+                    <th>Sub-Component</th>
+                    <th>Material</th>
+                    <th>Supplier</th>
+                    <th>Chemical</th>
+                    <th>Status</th>
+                    <th>CAS Number</th>
+                    <th>Chemical Concentration</th>
+                  </tr>
+                </thead>
+                <tbody id="ppwrResultsBody">
+                  <tr><td colspan="8" class="text-center text-muted py-3">Click Evaluate to see results</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+          <!-- Main Table -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th style="width:40px;">
+                    <input type="checkbox" id="ppwr-select-all" title="Select all rows" aria-label="Select all rows">
+                    <label class="visually-hidden" for="ppwr-select-all">Select all rows</label>
+                  </th>
+                  <th>Component</th>
+                  <th>Material</th>
+                  <th>Upload</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ppwrTableBody">
+                {% for item in initial_data.data %}
+                <tr class="data-row" data-index="{{ loop.index0 }}" data-material="{{ item.material }}">
+                  <td>
+                    <input type="checkbox" id="ppwr-select-{{ loop.index0 }}" class="form-check-input ppwr-select-checkbox" data-index="{{ loop.index0 }}" data-material="{{ item.material }}" title="Select row {{ loop.index0 }}" aria-label="Select row {{ loop.index0 }}">
+                    <label class="visually-hidden" for="ppwr-select-{{ loop.index0 }}">Select row {{ loop.index0 }}</label>
+                  </td>
+                  <td>
+                    <div><strong>{{ item.component or '-' }}</strong></div>
+                    <div class="small text-muted">{{ item.subcomponent or '-' }}</div>
+                  </td>
+                  <td>
+                    <div>{{ item.material_name or '-' }}</div>
+                    <div class="small text-muted">{{ item.material or '-' }}</div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <button class="btn btn-sm btn-outline-success" data-action="upload" data-index="{{ loop.index0 }}" title="Upload file">
+                        <i class="bi bi-upload"></i>
+                      </button>
+                      <span class="small text-muted upload-time ms-2" data-index="{{ loop.index0 }}">{% if item.uploaded_at %}{{ item.uploaded_at }}{% endif %}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary" data-action="toggle" data-index="{{ loop.index0 }}" title="Expand">
+                      <i class="bi bi-chevron-down"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Detail Row -->
+                <tr class="detail-row" id="detail-{{ loop.index0 }}" style="display: none;">
+                  <td colspan="5">
+                    <div class="p-3 bg-light rounded">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <strong>Reference Document:</strong> {{ item.reference_doc or '—' }}<br>
+                          <strong>Material ID:</strong> {{ item.material or '—' }}
+                        </div>
+                        <div class="col-md-6">
+                          {% if item.limits %}
+                          <div class="mt-2">
+                            <strong>Regulation Limits:</strong><br>
+                            {% for limit in item.limits %}
+                            <span class="badge badge-{{ limit.color }} me-1">
+                              {{ limit.name }}: {{ limit.limit }}
+                            </span>
+                            {% endfor %}
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <!-- Results Counter -->
+          <div class="results-counter">
+            Showing {{ initial_data.data|length if initial_data.data else 0 }} results
+          </div>
+          {# PPWR Supplier Declaration Upload (Backend Storage via proxy)
+          <div class="card card-shadow mt-4">
+            <div class="card-header bg-light border-bottom">
+              <h6 class="mb-0"><i class="bi bi-upload"></i> Upload Supplier Declaration</h6>
+            </div>
+            <div class="card-body">
+              <form method="post" action="{{ url_for('api_assessment_upload') }}" enctype="multipart/form-data">
+                <div class="row g-3 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label">File</label>
+                    <input class="form-control" type="file" name="file" required title="Upload file" aria-label="Upload file" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">SKU</label>
+                    <input class="form-control" type="text" name="sku" value="{{ sku }}" placeholder="SKU" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Material ID</label>
+                    <input class="form-control" type="text" name="material" id="ppwrUploadMaterial" placeholder="Material from BOM" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Supplier</label>
+                    <input class="form-control" type="text" name="supplier_name" placeholder="Acme" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Description</label>
+                    <input class="form-control" type="text" name="description" placeholder="PPWR Declaration" />
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button class="btn btn-primary" type="submit">Upload to Backend</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        #}
+         
+
+          <!-- Document to BOM Mapping Section (PPWR only) -->
+          <div class="card card-shadow mt-4" id="documentMappingSection">
+            <div class="card-header bg-light border-bottom">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-file-earmark-check"></i> Document to BOM Mapping</h6>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary" id="refreshDocMapping"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="docFilterType" class="form-label">Filter by Status:</label>
+                  <select id="docFilterType" class="form-select form-select-sm">
+                    <option value="all">All Documents</option>
+                    <option value="mapped">Mapped</option>
+                    <option value="unmapped">Unmapped</option>
+                  </select>
+                </div>
+                <div class="col-md-6 text-end">
+                  <div style="width: 150px; height: 120px; margin: 0 auto;">
+                    <canvas id="docMappingChart"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Document Name</th>
+                      <th>File Type</th>
+                      <th>Mapped To</th>
+                      <th>Status</th>
+                      <th style="width: 80px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="docMappingTableBody">
+                    <tr>
+                      <td colspan="5" class="text-center text-muted py-3">Loading documents...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            // Expand/collapse for PPWR tab Actions button
+            document.addEventListener('DOMContentLoaded', function() {
+              // Only target the PPWR table
+              const ppwrTable = document.getElementById('ppwrTableBody');
+              if (!ppwrTable) return;
+              ppwrTable.addEventListener('click', function(e) {
+                const btn = e.target.closest('button[data-action="toggle"]');
+                if (!btn) return;
+                const idx = btn.getAttribute('data-index');
+                const detailRow = document.getElementById('expand-detail-' + idx);
+                // Remove any other expanded rows
+                document.querySelectorAll('.expand-detail-row').forEach(function(row) {
+                  if (row !== detailRow) row.style.display = 'none';
+                });
+                if (detailRow) {
+                  // Toggle visibility
+                  detailRow.style.display = (detailRow.style.display === 'none' || !detailRow.style.display) ? '' : 'none';
+                } else {
+                  // Insert new detail row if not present
+                  const tr = btn.closest('tr');
+                  const newRow = document.createElement('tr');
+                  newRow.className = 'expand-detail-row';
+                  newRow.id = 'expand-detail-' + idx;
+                  newRow.innerHTML = `<td colspan="4">
+                    <div style="padding: 16px; background: #f6f8fa; border-radius: 8px;">
+                      <h5>Reference document</h5>
+                      <hr>
+                      <h5>Supplier</h5>
+                      <hr>
+                      <h5>Concentration</h5>
+                    </div>
+                  </td>`;
+                  tr.parentNode.insertBefore(newRow, tr.nextSibling);
+                }
+              });
+            });
+            // Document Mapping - PPWR Tab Only
+            const DOC_SKU = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+            let docMappings = [];
+            let docChart = null;
+
+            async function loadDocumentMappings() {
+              try {
+                const declRes = await fetch(`/api/supplier-declarations/${DOC_SKU}`);
+                const declarations = declRes.ok ? (await declRes.json()).declarations || [] : [];
+
+                // Fetch BOM materials via strict endpoint and build a set
+                let bomMaterialSet = new Set();
+                try {
+                  const bomRes = await fetch(`/debug-bom/${DOC_SKU}`);
+                  if (bomRes.ok) {
+                    const bomData = await bomRes.json();
+                    const rows = (bomData && bomData.rows) || [];
+                    rows.forEach(r => { if (r.material) bomMaterialSet.add(r.material); });
+                  }
+                } catch (e) {
+                  console.warn('Could not fetch BOM materials');
+                }
+
+                // Strict mapping: use declaration's material field and compare to BOM
+                docMappings = declarations.map(d => {
+                  const declMat = d.material || null;
+                  const isMapped = declMat ? bomMaterialSet.has(declMat) : false;
+                  return {
+                    id: d.id,
+                    filename: d.original_filename || d.filename || 'Unknown',
+                    fileType: (d.document_type || 'PDF').toUpperCase(),
+                    mappedId: isMapped ? declMat : null,
+                    mappedName: isMapped ? declMat : null,
+                    isMapped: isMapped
+                  };
+                });
+
+                renderDocumentMappingTable();
+                updateDocMappingChart();
+              } catch (e) {
+                console.error('Error loading document mappings:', e);
+              }
+            }
+
+            function updateDocMappingChart() {
+              // Guard when Chart.js is not yet loaded to avoid runtime errors
+              if (typeof Chart === 'undefined') return;
+              const mappedCount = docMappings.filter(m => m.isMapped).length;
+              const unmappedCount = docMappings.length - mappedCount;
+
+              const ctx = document.getElementById('docMappingChart');
+              if (!ctx) return;
+
+              const chartData = {
+                labels: [`Mapped (${mappedCount})`, `Unmapped (${unmappedCount})`],
+                datasets: [{
+                  data: [mappedCount, unmappedCount],
+                  backgroundColor: ['#10b981', '#ef4444'],
+                  borderWidth: 0
+                }]
+              };
+
+              if (docChart) {
+                docChart.data = chartData;
+                docChart.update();
+              } else {
+                docChart = new Chart(ctx, {
+                  type: 'doughnut',
+                  data: chartData,
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: true, position: 'bottom' } },
+                    cutout: '65%'
+                  }
+                });
+              }
+            }
+
+            function renderDocumentMappingTable() {
+              const tbody = document.getElementById('docMappingTableBody');
+              const filterEl = document.getElementById('docFilterType');
+              const filterVal = filterEl ? filterEl.value : 'all';
+              
+              let filtered = docMappings;
+              if (filterVal === 'mapped') filtered = docMappings.filter(m => m.isMapped);
+              else if (filterVal === 'unmapped') filtered = docMappings.filter(m => !m.isMapped);
+
+              if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No documents to display</td></tr>';
+                return;
+              }
+
+              tbody.innerHTML = filtered.map(m => `
+                <tr>
+                  <td><small>${escapeHtml(m.filename)}</small></td>
+                  <td><small>${m.fileType}</small></td>
+                  <td>${m.isMapped ? `<small><strong>${escapeHtml(m.mappedId)}</strong></small>` : '<small class="text-muted">—</small>'}</td>
+                  <td><span class="${m.isMapped ? 'ppwr-badge-mapped' : 'ppwr-badge-unmapped'}">${m.isMapped ? 'Mapped' : 'Unmapped'}</span></td>
+                  <td><button class="btn btn-xs btn-sm btn-link p-0 doc-map-view" type="button" data-doc-id="${escapeHtml(String(m.id))}" title="View document ${escapeHtml(String(m.id))}" aria-label="View document ${escapeHtml(String(m.id))}"><i class="bi bi-info-circle"></i></button></td>
+                </tr>
+              `).join('');
+            }
+
+            function escapeHtml(text) {
+              if (!text) return '';
+              return text.replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+            }
+
+            try {
+              const filterEl2 = document.getElementById('docFilterType');
+              if (filterEl2) filterEl2.addEventListener('change', renderDocumentMappingTable);
+            } catch(_) {}
+            try {
+              const refreshBtn = document.getElementById('refreshDocMapping');
+              if (refreshBtn) refreshBtn.addEventListener('click', loadDocumentMappings);
+            } catch(_) {}
+            try {
+              const docTable = document.getElementById('docMappingTableBody');
+              if (docTable && !docTable.__ppwr_doc_click_bound) {
+                docTable.__ppwr_doc_click_bound = true;
+                docTable.addEventListener('click', function(ev) {
+                  const btn = ev.target.closest && ev.target.closest('button[data-doc-id]');
+                  if (!btn) return;
+                  const id = btn.getAttribute('data-doc-id') || '';
+                  alert(`Document ID: ${id}`);
+                });
+              }
+            } catch(_) {}
+            try {
+              document.addEventListener('DOMContentLoaded', loadDocumentMappings);
+            } catch(_) {}
+          </script>
+
+          {% endif %}
+        </div>
+          
+          
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- hidden global file input used by per-row Upload buttons -->
+<input type="file" id="globalUploadInput" style="display:none" title="Upload file" aria-label="Upload file" />
+<div id="mu-debug" style="display:none;position:fixed;right:16px;bottom:16px;z-index:2000;padding:8px 10px;background:#ffffff;border:1px solid #ddd;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.08);font-size:0.9rem;color:#111;"></div>
+
+<!-- PPWR Assessment Evaluation Modal -->
+            <!-- Removed duplicate PPWR modal (kept the primary one defined earlier which includes the real content) -->
+
+<!-- Multi-file Upload Modal (for PPWR rows) -->
+<div class="modal fade" id="multiUploadModal" tabindex="-1" aria-labelledby="multiUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="multiUploadModalLabel">Upload files for row <span id="mu-row-label"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="mu-drop-zone" class="mu-drop-zone mb-3">
+          <div><i class="bi bi-cloud-arrow-up me-2"></i><strong>Drag & Drop files here</strong> or click to browse</div>
+          <div class="hint">Allowed: PDF, XLSX, XLS, DOCX, DOC (max 10 MB each)</div>
+        </div>
+        <div class="mb-2">
+          <input type="file" id="mu-file-input" multiple class="form-control" accept=".pdf,.xlsx,.xls,.docx,.doc" title="Select files to upload" aria-label="Select files to upload" />
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" value="" id="mu-apply-duplicates">
+          <label class="form-check-label" for="mu-apply-duplicates">
+            Select to apply for all the duplicates
+          </label>
+        </div>
+
+        <div id="mu-selected-list" class="list-group">
+          <!-- per-file rows inserted here -->
+        </div>
+
+        <div class="mt-3">
+          <small class="text-muted">Allowed types: <span id="mu-allowed-types">.pdf, .xlsx, .docx</span>. Max file size: <span id="mu-max-size">10 MB</span> (per file).</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="mu-start-all" type="button" class="btn btn-primary">Start Uploads</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Guard-rail: ensure Start Uploads always has a working handler, even if later scripts fail -->
+<script>
+  (function ensureStartUploadsBinding(){
+    function ensureMuState(){
+      if (!window.mu_state) {
+        window.mu_state = { rowIndex: null, rowMaterial: null, sku: (typeof window.SKU !== 'undefined' ? window.SKU : null), files: [] };
+      }
+      return window.mu_state;
+    }
+
+    // Minimal queue helper if the main one failed to load
+    if (typeof window.mu_add_files !== 'function') {
+      window.mu_add_files = function(fileList){
+        const st = ensureMuState();
+        st.files = st.files || [];
+        Array.from(fileList || []).forEach(f => {
+          st.files.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,8), file: f, status: 'pending', progress: 0 });
+        });
+      };
+    }
+
+    // Minimal uploader fallback so the button can still POST to the API
+    if (typeof window.mu_upload_single !== 'function') {
+      window.mu_upload_single = function(id){
+        const st = ensureMuState();
+        const item = st.files.find(x => x.id === id);
+        if (!item || !item.file) return;
+        const fd = new FormData();
+        fd.append('files', item.file);
+        fd.append('sku', st.sku || (typeof window.SKU !== 'undefined' ? window.SKU : '') || '');
+        fd.append('material', st.rowMaterial || '');
+        fd.append('index', st.rowIndex || '');
+        item.status = 'uploading';
+        fetch('/api/supplier-declarations/upload', { method: 'POST', body: fd })
+          .then(r => r.json().then(j => ({ ok: r.ok, data: j })).catch(() => ({ ok: r.ok, data: {} })))
+          .then(({ ok, data }) => {
+            if (ok && (data.success || (data.uploaded && data.uploaded.length))) {
+              item.status = 'done';
+              item.progress = 100;
+              try { mu_toast(`${item.file.name} uploaded`, 'Upload', 'success', 2500); } catch(_) {}
+              // Close modal if open
+              if (typeof window.mu_close_modal === 'function') { window.mu_close_modal(); }
+              // Switch to PPWR Assessment tab if not already
+              try {
+                const ppwrTabBtn = document.querySelector('button[data-bs-target="#ppwrTabPane"]');
+                if (ppwrTabBtn && !ppwrTabBtn.classList.contains('active')) {
+                  ppwrTabBtn.click();
+                }
+              } catch(_) {}
+              // Refresh declarations and row UI
+              try { fetchDeclarationsIndex().then(() => applyDeclarationsToRows()); } catch(_) {}
+            } else {
+              item.status = 'failed';
+              try { mu_toast((data && data.error) || `${item.file.name} upload failed`, 'Upload', 'danger', 4000); } catch(_) {}
+            }
+          })
+          .catch(err => { item.status = 'failed'; try { mu_toast('Upload error', 'Upload', 'danger', 4000); } catch(_) {} console.error('fallback upload error', err); });
+      };
+    }
+
+    // Minimal fallback implementation so the button never feels dead
+    if (typeof window.mu_start_all !== 'function') {
+      window.mu_start_all = function(){
+        const st = ensureMuState();
+        const input = document.getElementById('mu-file-input');
+        // If no files yet, prompt for selection and show a visible cue
+        if (!st.files || !st.files.length) {
+          if (input) { try { input.click(); } catch(_) {} }
+          try { if (window.mu_toast) mu_toast('Choose files to upload', 'Upload', 'info', 1800); } catch(_) {}
+          return;
+        }
+        // If files exist but main uploader is missing, fall back to the minimal uploader above
+        // Kick off uploads for any pending items
+        try {
+          st.files.filter(f => f.status !== 'done').forEach(f => {
+            if (!f.status || f.status === 'pending' || f.status === 'failed' || f.status === 'cancelled') {
+              f.status = 'pending';
+              window.mu_upload_single(f.id);
+            }
+          });
+        } catch (e) {
+          console.warn('Fallback start_all failed', e);
+          try { mu_toast('Unable to start uploads', 'Upload', 'danger', 3000); } catch(_) {}
+        }
+      };
+    }
+
+    // Delegated click binding so the button always triggers the handler
+    document.addEventListener('click', function(ev){
+      const btn = ev.target && ev.target.closest && ev.target.closest('#mu-start-all');
+      if (!btn) return;
+      try { ev.preventDefault(); ev.stopPropagation(); } catch(_) {}
+      try { window.mu_start_all && window.mu_start_all(); } catch (e) {
+        console.error('Start Uploads handler error', e);
+        const input = document.getElementById('mu-file-input');
+        if (input) { try { input.click(); } catch(_) {} }
+        try { if (window.mu_toast) mu_toast('Upload handler error', 'Upload', 'danger', 2800); } catch(_) {}
+      }
+    }, true);
+  })();
+</script>
+
+<!-- Expose SKU/PRODUCT_NAME early for handlers that run before DOMContentLoaded -->
+<script>
+  try {
+    const _ctxEl = document.body;
+    const _skuFromDom = (_ctxEl && _ctxEl.dataset) ? _ctxEl.dataset.sku : '';
+    const _nameFromDom = (_ctxEl && _ctxEl.dataset) ? _ctxEl.dataset.productName : '';
+    if (typeof window.SKU === 'undefined') { window.SKU = _skuFromDom; }
+    if (typeof window.PRODUCT_NAME === 'undefined') { window.PRODUCT_NAME = _nameFromDom; }
+    // ensure early mu_state carries sku if already created by earlier handlers
+    if (typeof window.mu_state !== 'undefined' && window.mu_state && !window.mu_state.sku) {
+      window.mu_state.sku = window.SKU;
+    }
+  } catch (_) { /* ignore */ }
+  // Also ensure a safe escapeHtml exists for any earlier calls
+  try {
+    if (typeof window.escapeHtml !== 'function') {
+      window.escapeHtml = function(str){
+        try { return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s])); } catch(_) { return String(str); }
+      };
+    }
+  } catch (_) { /* noop */ }
+  // Minimal toast fallback if main mu_toast is not ready yet
+  try {
+    if (typeof window.mu_toast !== 'function') {
+      // Visible toast fallback: lightweight, no dependencies
+      window.mu_toast = function(msg, title, type, timeout){
+        try {
+          const tmo = typeof timeout === 'number' ? timeout : 2500;
+          let cont = document.getElementById('mu-toast-container');
+          if (!cont) {
+            cont = document.createElement('div');
+            cont.id = 'mu-toast-container';
+            cont.style.position = 'fixed';
+            cont.style.top = '12px';
+            cont.style.right = '12px';
+            cont.style.zIndex = '1150';
+            cont.style.display = 'flex';
+            cont.style.flexDirection = 'column';
+            cont.style.gap = '8px';
+            document.body.appendChild(cont);
+          }
+          const el = document.createElement('div');
+          el.style.padding = '10px 12px';
+          el.style.borderRadius = '8px';
+          el.style.boxShadow = '0 6px 24px rgba(0,0,0,0.15)';
+          el.style.color = '#fff';
+          el.style.fontSize = '14px';
+          el.style.maxWidth = '360px';
+          el.style.wordBreak = 'break-word';
+          el.style.background = (type === 'danger') ? '#dc3545' : (type === 'warning') ? '#f59e0b' : (type === 'success') ? '#16a34a' : '#0d6efd';
+          el.textContent = (title ? (title + ': ') : '') + (msg || '');
+          cont.appendChild(el);
+          setTimeout(() => { try { el.remove(); } catch(_) {} }, tmo);
+        } catch (e) { try { console.log('[TOAST]', title||'', type||'', msg); } catch(_) {} }
+      };
+    }
+  } catch (_) {}
+</script>
+
+<script>
+  // Hardening: define modal helpers early so click handlers always have them
+  (function ensureMuModalHelpers(){
+    try {
+      if (typeof window.mu_state === 'undefined') {
+        window.mu_state = { rowIndex: null, rowMaterial: null, sku: (typeof window.SKU !== 'undefined' ? window.SKU : null), files: [] };
+      }
+      if (typeof window.mu_open_modal !== 'function') {
+        window.mu_open_modal = function(){
+          const modal = document.getElementById('multiUploadModal');
+          if (!modal) return;
+          modal.classList.add('show');
+          modal.style.display = 'block';
+          modal.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('modal-open');
+          if (!document.querySelector('.modal-backdrop')) {
+            const bd = document.createElement('div');
+            bd.className = 'modal-backdrop fade show';
+            document.body.appendChild(bd);
+          }
+        };
+      }
+      if (typeof window.mu_close_modal !== 'function') {
+        window.mu_close_modal = function(){
+          const modal = document.getElementById('multiUploadModal');
+          if (!modal) return;
+          modal.classList.remove('show');
+          modal.style.display = 'none';
+          modal.setAttribute('aria-hidden', 'true');
+          document.body.classList.remove('modal-open');
+          const bd = document.querySelector('.modal-backdrop');
+          if (bd) bd.remove();
+        };
+      }
+      // Bind close buttons early
+      try {
+        document.querySelectorAll('#multiUploadModal [data-bs-dismiss="modal"], #multiUploadModal .btn-close').forEach(function(el){
+          if (!el.__mu_bound) { el.__mu_bound = true; el.addEventListener('click', function(e){ try { e.preventDefault(); } catch(_) {}; window.mu_close_modal && window.mu_close_modal(); }); }
+        });
+      } catch (_) {}
+    } catch (_) {}
+  })();
+</script>
+
+<!-- Early, robust binder: ensure Upload buttons always open the modal -->
+<script>
+  (function bindEarlyUploadClick(){
+    try {
+      if (document.__ppwr_upload_bound) return; // avoid double-binding
+      document.__ppwr_upload_bound = true;
+      document.addEventListener('click', function(ev){
+        const btn = ev.target && ev.target.closest && ev.target.closest('button[data-action="upload"]');
+        if (!btn) return;
+        try { ev.preventDefault(); ev.stopPropagation(); } catch(_) {}
+        const idx = btn.getAttribute('data-index');
+        const rowEl = document.querySelector(`tr.data-row[data-index="${idx}"]`);
+        const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+        window.mu_state = window.mu_state || { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+        mu_state.rowIndex = idx; mu_state.rowMaterial = material; mu_state.files = [];
+        // Ensure SKU is present for backend upload requirements
+        if (!mu_state.sku && typeof window.SKU !== 'undefined' && window.SKU) {
+          mu_state.sku = window.SKU;
+        }
+        var label = document.getElementById('mu-row-label'); if (label) label.textContent = material || idx || '';
+        var fileInput = document.getElementById('mu-file-input'); if (fileInput) fileInput.value = '';
+        try { if (typeof mu_render_list === 'function') mu_render_list(); } catch(_) {}
+        if (typeof mu_open_modal === 'function') { mu_open_modal(); return; }
+        // last resort: fallback to the hidden single input
+        const global = document.getElementById('globalUploadInput');
+        if (global) { global.dataset.index = idx; try { global.click(); } catch(_) {} }
+      });
+    } catch(_) {}
+  })();
+  // Bind Start Uploads and file input early with safe wrappers so they work even if later scripts fail
+  (function bindEarlyUploadControls(){
+    try {
+      var startBtn = document.getElementById('mu-start-all');
+      if (startBtn && !startBtn.__mu_bound) {
+        startBtn.__mu_bound = true;
+        startBtn.addEventListener('click', function(e){ try { e.preventDefault(); } catch(_) {}; if (window.mu_start_all) { window.mu_start_all(); } });
+      }
+      var input = document.getElementById('mu-file-input');
+      if (input && !input.__mu_bound) {
+        input.__mu_bound = true;
+        input.addEventListener('change', function(){
+          if (window.mu_add_files) { window.mu_add_files(input.files); }
+          else {
+            // queue minimal state so Start Uploads wrapper can proceed
+            window.mu_state = window.mu_state || { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+            try {
+              for (var i=0;i<input.files.length;i++) {
+                var f = input.files[i];
+                window.mu_state.files.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,8), file: f, status: 'pending', xhr: null, progress: 0 });
+              }
+            } catch(_) {}
+          }
+          // If Start Uploads initiated with no files queued, auto-start after selection
+          try { if (window._mu_autostart && window.mu_start_all) { window._mu_autostart = false; window.mu_start_all(); } } catch(_) {}
+        });
+      }
+    } catch(_) {}
+  })();
+</script>
+
+<!-- Toast container -->
+<div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1205;">
+  <div id="mu-toast-container"></div>
+</div>
+
+<style>
+  /* Ensure upload modal appears above toasts/overlays */
+  #multiUploadModal { z-index: 1100 !important; }
+  .modal-backdrop { z-index: 1090 !important; }
+  /* Minor enhancement: highlight drop zone on drag */
+  .mu-drop-zone.mu-drop-hover { border-color: #0d6efd; box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25); }
+</style>
+
+<!-- (Removed upload choice modal - direct Supplier Declarations navigation is used) -->
+
+<!-- Early global fallback: ensure openMultiUpload is defined before any inline handlers -->
+<script>
+  (function(){
+    if (typeof window.openMultiUpload !== 'function') {
+      window.openMultiUpload = function(index){
+        try {
+          // Prepare state for modal workflow
+          const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+          const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+          if (typeof window.mu_state === 'undefined') window.mu_state = { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+          mu_state.rowIndex = index;
+          mu_state.rowMaterial = material;
+          mu_state.sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+          mu_state.files = [];
+          if (typeof window.mu_render_list === 'function') mu_render_list();
+
+          // Prefer showing the multi-file modal (has the duplicates checkbox)
+          if (typeof window.mu_open_modal === 'function') { mu_open_modal(); return; }
+
+          // Fallback to hidden global input if modal helpers are not available
+          const global = document.getElementById('globalUploadInput');
+          if (global) { global.dataset.index = index; global.click(); return; }
+
+          // Last resort: temporary input
+          const tmp = document.createElement('input');
+          tmp.type = 'file';
+          tmp.accept = '.pdf,.xlsx,.xls,.docx,.doc';
+          tmp.style.display = 'none';
+          document.body.appendChild(tmp);
+          tmp.addEventListener('change', function(){ try { document.body.removeChild(tmp); } catch(_) {} });
+          tmp.click();
+        } catch(e) { /* ignore */ }
+      };
+    }
+  })();
+</script>
+<!-- Bootstrap CDN loader removed to prevent HTML being parsed as JS -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body.dataset ? document.body.dataset.sku : '');
+  const productName = (typeof window.PRODUCT_NAME !== 'undefined' && window.PRODUCT_NAME) ? window.PRODUCT_NAME : (document.body.dataset ? document.body.dataset.productName : '');
+  window.SKU = sku; // normalize globals for later scripts
+  window.PRODUCT_NAME = productName;
+  const regionFilter = document.getElementById('regionFilter');
+  const clearRegionFilter = document.getElementById('clearRegionFilter');
+  const regionFilter1 = document.getElementById('regionFilter1');
+  const clearRegionFilter1 = document.getElementById('clearRegionFilter1');
+  const regionIndicator = document.getElementById('regionIndicator');
+  const regionText = document.getElementById('regionText');
+
+  // Lightweight tab switching (no Bootstrap JS): PFAS/PPWR/others
+  try {
+    const allBtns = document.querySelectorAll('button[data-bs-target]');
+    const allPanes = document.querySelectorAll('.tab-pane');
+    function activateTab(sel) {
+      if (!sel) return;
+      allBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      allPanes.forEach(p => { p.classList.remove('show'); p.classList.remove('active'); });
+      const btn = document.querySelector(`button[data-bs-target="${sel}"]`);
+      const pane = document.querySelector(sel);
+      if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected','true'); }
+      if (pane) { pane.classList.add('show'); pane.classList.add('active'); }
+      // When PPWR tab is active, hide any standalone upload section UI within PPWR pane
+      try {
+        if (sel === '#ppwrTab' && pane) {
+          // Common patterns: a card/header titled "Upload Supplier Declaration"; hide its container
+          const headers = pane.querySelectorAll('h1,h2,h3,h4,h5,h6,.card-title,.section-title');
+          headers.forEach(h => {
+            const text = (h.textContent || '').trim().toLowerCase();
+            if (text.includes('upload supplier declaration')) {
+              const container = h.closest('.card, .section, .container, .row, .col, form') || h.parentElement;
+              if (container) container.style.display = 'none';
+            }
+          });
+          // Also hide any forms with an upload button labeled "Upload to Backend" inside PPWR pane
+          pane.querySelectorAll('button').forEach(b => {
+            const t = (b.textContent || '').trim().toLowerCase();
+            if (t.includes('upload to backend')) {
+              const cont = b.closest('form, .card, .section, .container');
+              if (cont) cont.style.display = 'none';
+            }
+          });
+        }
+      } catch(_) {}
+      try {
+        const label = btn ? btn.textContent.trim() : (sel || '').replace('#','');
+        document.title = `${label} - ${productName || sku}`;
+      } catch(_) {}
+    }
+    allBtns.forEach(b => {
+      b.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const sel = b.getAttribute('data-bs-target');
+        const url = new URL(window.location);
+        url.searchParams.set('tab', (sel || '').replace('#',''));
+        window.history.replaceState({}, '', url);
+        activateTab(sel);
+      });
+    });
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const hash = window.location.hash && window.location.hash.trim().length ? window.location.hash.trim() : '';
+    let initial = '#pfasTab';
+    if (tabParam) initial = '#' + tabParam;
+    else if (hash && document.querySelector(hash)) initial = hash;
+    activateTab(initial);
+    // Handle any toast passed via query params
+    const toastMsgEnc = urlParams.get('toast_msg');
+    const toastType = urlParams.get('toast_type') || 'success';
+    if (toastMsgEnc) {
+      try { mu_toast(decodeURIComponent(toastMsgEnc), 'Notice', toastType, 3000); } catch(_) {}
+    }
+  } catch (e) { /* noop */ }
+
+  // Load available regions on page load
+  loadAvailableRegions(sku);
+  
+  // Set initial selected region from URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialRegion = urlParams.get('region') || 'all';
+  if (initialRegion !== 'all') {
+      setTimeout(() => {
+          try { if (regionFilter) regionFilter.value = initialRegion; } catch(_) {}
+          try { updateRegionIndicator(initialRegion); } catch(_) {}
+      }, 1000);
+  }
+  
+  // Handle PFAS region change
+  if (regionFilter) {
+    regionFilter.addEventListener('change', function() {
+      const selectedRegion = this.value;
+      filterAssessmentDataPFAS(sku, selectedRegion);
+      try { updateRegionIndicator(selectedRegion); } catch(_) {}
+      updateURL(selectedRegion);
+    });
+  }
+
+  // Handle PFAS clear filter
+  if (clearRegionFilter) {
+    clearRegionFilter.addEventListener('click', function() {
+      try { if (regionFilter) regionFilter.value = 'all'; } catch(_) {}
+      filterAssessmentDataPFAS(sku, 'all');
+      try { updateRegionIndicator('all'); } catch(_) {}
+      updateURL('all');
+    });
+  }
+
+  // Handle PPWR region change
+  if (regionFilter1) {
+    regionFilter1.addEventListener('change', function() {
+      const selectedRegion = this.value;
+      filterAssessmentDataPPWR(sku, selectedRegion);
+      // For PPWR we don't update the same region indicator; update URL so state is preserved
+      updateURL(selectedRegion);
+    });
+  }
+
+  // Handle PPWR clear filter
+  if (clearRegionFilter1) {
+    clearRegionFilter1.addEventListener('click', function() {
+      try { if (regionFilter1) regionFilter1.value = 'all'; } catch(_) {}
+      filterAssessmentDataPPWR(sku, 'all');
+      updateURL('all');
+    });
+  }
+
+  // Load available regions
+  function loadAvailableRegions(sku) {
+    fetch(`/api/assessment-regions/${sku}`)
+      .then(response => response.json())
+      .then(data => {
+        const serverRegions = data.regions || [];
+
+        // Populate PFAS region filter with all server-provided regions (guarded)
+        if (regionFilter) {
+          regionFilter.innerHTML = '<option value="all">All Regions</option>';
+          serverRegions.forEach(region => {
+            const option = document.createElement('option');
+            option.value = region.value;
+            option.textContent = region.label;
+            regionFilter.appendChild(option);
+          });
+        }
+
+        // Populate PPWR region filter with only the two EU options (guarded)
+        if (regionFilter1) {
+          regionFilter1.innerHTML = '<option value="all">All Regions</option>';
+          try {
+            if (typeof PPWR_REGIONS !== 'undefined' && Array.isArray(PPWR_REGIONS)) {
+              PPWR_REGIONS.forEach(rr => {
+                const option = document.createElement('option');
+                option.value = rr.value;
+                option.textContent = rr.label;
+                const available = serverRegions.some(r => r.value === rr.value);
+                if (!available) option.disabled = true;
+                regionFilter1.appendChild(option);
+              });
+            }
+          } catch (e) { /* noop */ }
+        }
+
+        // Set initial selected region from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const regionParam = urlParams.get('region');
+        if (regionParam) {
+          // If PFAS has this region, select it
+          try {
+            if (regionFilter && [...regionFilter.options].some(o => o.value === regionParam)) {
+              regionFilter.value = regionParam;
+              try { updateRegionIndicator(regionParam); } catch(_) {}
+            }
+          } catch(_) {}
+          // If PPWR has it, select there
+          try {
+            if (regionFilter1 && [...regionFilter1.options].some(o => o.value === regionParam)) {
+              regionFilter1.value = regionParam;
+            }
+          } catch(_) {}
+        }
+      })
+      .catch(error => {
+        console.error('Error loading regions:', error);
+      });
+  }
+    
+  // Filter PFAS assessment data and update PFAS table
+  function filterAssessmentDataPFAS(sku, region) {
+    showLoading(true);
+    fetch(`/api/assessment-filter/${sku}?region=${encodeURIComponent(region)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateSummaryCards(data.summary);
+          updatePFASContent(data.data, data.regulations_applied);
+          updateResultsCounter(data.data.length);
+        } else {
+          console.error('Filter error:', data.error);
+          showError('Error loading filtered data');
+        }
+      })
+      .catch(error => {
+        console.error('Error filtering ', error);
+        showError('Error loading data');
+      })
+      .finally(() => showLoading(false));
+  }
+
+  // Filter PPWR assessment data and update PPWR table (limited to PPWR_REGIONS)
+  function filterAssessmentDataPPWR(sku, region) {
+    showLoading(true);
+    fetch(`/api/assessment-filter/${sku}?region=${encodeURIComponent(region)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // For PPWR we reuse the same summary format but render in PPWR card/table
+          updatePPWRSummary(data.summary || {});
+          updatePPWRContent(data.data, data.regulations_applied);
+          updateResultsCounter(data.data.length);
+        } else {
+          console.error('Filter error:', data.error);
+          showError('Error loading filtered data');
+        }
+      })
+      .catch(error => {
+        console.error('Error filtering ', error);
+        showError('Error loading data');
+      })
+      .finally(() => showLoading(false));
+  }
+    
+    // Update summary cards
+    function updateSummaryCards(summary) {
+        // Update files card
+        const filesTotal = document.querySelector('.files-card .metric-value');
+        const filesDownloaded = document.querySelector('.detail-item.success span:last-child');
+        const filesNotFound = document.querySelector('.detail-item.danger span:last-child');
+        const altFound = document.querySelector('.detail-item.info span:last-child');
+        const altNotFound = document.querySelector('.detail-item.warning span:last-child');
+        
+        if (filesTotal) filesTotal.textContent = summary.files_total || 0;
+        if (filesDownloaded) filesDownloaded.textContent = summary.files_downloaded || 0;
+        if (filesNotFound) filesNotFound.textContent = summary.files_not_found || 0;
+        if (altFound) altFound.textContent = summary.alt_found || 0;
+        if (altNotFound) altNotFound.textContent = summary.alt_not_found || 0;
+        
+        // Update review card
+        const reviewTotal = document.querySelector('.review-card .metric-value');
+        const inConformance = document.querySelector('.review-card .detail-item.success span:last-child');
+        const nonConforming = document.querySelector('.review-card .detail-item.danger span:last-child');
+        const noData = document.querySelector('.review-card .detail-item.warning span:last-child');
+        
+        if (reviewTotal) reviewTotal.textContent = summary.total || 0;
+        if (inConformance) inConformance.textContent = summary.in_conformance || 0;
+        if (nonConforming) nonConforming.textContent = summary.non_conforming || 0;
+        if (noData) noData.textContent = summary.no_chemical_data || 0;
+    }
+
+  // Small adapter to update PPWR summary area (reuses PFAS summary updater)
+  function updatePPWRSummary(summary) {
+    // Reuse the same logic as PFAS summary card update for now
+    updateSummaryCards(summary);
+  }
+    
+    // Update table content
+  function updatePFASContent(data, regulationsApplied) {
+    const tableBody = document.getElementById('pfasTableBody');
+        if (!tableBody) return;
+        
+        if (data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="bi bi-search mb-2" style="font-size: 2rem;"></i>
+                            <div>No data found for the selected region</div>
+                            <small>Try selecting a different region or clear the filter</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        data.forEach((item, index) => {
+            // Main row
+      html += `
+        <tr class="data-row" data-index="${index}" data-material="${item.material}">
+            <td>
+                        <div><strong>${item.component || '-'}</strong></div>
+                        <div class="small text-muted">${item.subcomponent || '-'}</div>
+                    </td>
+                    <td>
+                        <div>${item.material_name || '-'}</div>
+                        <div class="small text-muted">${item.material || '-'}</div>
+                    </td>
+                    <td>${item.supplier_name || 'No Data'}</td>
+                    <td>
+                        <div>${item.chemical_name || 'No Data'}</div>
+                        <div class="small text-muted">${item.cas_number || '-'}</div>
+                    </td>
+                    <td>${item.concentration || 'No Data'}</td>
+                    <td>
+                        <span class="badge badge-${item.status_color}">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary" data-action="toggle" data-index="${index}" title="Expand">
+                        <i class="bi bi-chevron-down"></i>
+                      </button>
+                    </td>
+                </tr>
+            `;
+            
+            // Detail row (hidden by default)
+            let limitsHtml = '';
+            if (item.limits && item.limits.length > 0) {
+                limitsHtml = '<div class="mt-2"><strong>Regulation Limits:</strong><br>';
+                item.limits.forEach(limit => {
+                    limitsHtml += `
+                        <span class="badge badge-${limit.color} me-1">
+                            ${limit.name}: ${limit.limit}
+                        </span>
+                    `;
+                });
+                limitsHtml += '</div>';
+            }
+            
+            html += `
+        <tr class="detail-row" id="detail-${index}" style="display: none;">
+          <td colspan="7">
+                        <div class="p-3 bg-light rounded">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Reference Document:</strong> ${item.reference_doc || '—'}<br>
+                                    <strong>Material ID:</strong> ${item.material || '—'}
+                                </div>
+                                <div class="col-md-6">
+                                    ${limitsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+    tableBody.innerHTML = html;
+  }
+
+  function updatePPWRContent(data, regulationsApplied) {
+    const tableBody = document.getElementById('ppwrTableBody');
+    if (!tableBody) return;
+        if (!tableBody) return;
+        
+        if (data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="bi bi-search mb-2" style="font-size: 2rem;"></i>
+                            <div>No data found for the selected region</div>
+                            <small>Try selecting a different region or clear the filter</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        data.forEach((item, index) => {
+                // Main row (PPWR: Supplier/Chemical/Concentration/Status are commented out per request)
+                html += `
+                  <tr class="data-row" data-index="${index}" data-material="${item.material}">
+                      <td>
+                        <input type="checkbox" id="ppwr-select-${index}" class="form-check-input ppwr-select-checkbox" data-index="${index}" data-material="${item.material}" title="Select row ${index}" aria-label="Select row ${index}">
+                        <label class="visually-hidden" for="ppwr-select-${index}">Select row ${index}</label>
+                      </td>
+                      <td>
+                        <div><strong>${item.component || '-'}</strong></div>
+                        <div class="small text-muted">${item.subcomponent || '-'}</div>
+                      </td>
+                      <td>
+                        <div>${item.material_name || '-'}</div>
+                        <div class="small text-muted">${item.material || '-'}</div>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <button class="btn btn-sm btn-outline-success" data-action="upload" data-index="${index}" title="Upload file">
+                            <i class="bi bi-upload"></i>
+                          </button>
+                          <span class="small text-muted upload-time ms-2" data-index="${index}">${item.uploaded_at || ''}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary" data-action="toggle" data-index="${index}" title="Expand">
+                          <i class="bi bi-chevron-down"></i>
+                        </button>
+                      </td>
+                    </tr>
+                `;
+            
+            // Detail row (hidden by default)
+            let limitsHtml = '';
+            if (item.limits && item.limits.length > 0) {
+                limitsHtml = '<div class="mt-2"><strong>Regulation Limits:</strong><br>';
+                item.limits.forEach(limit => {
+                    limitsHtml += `
+                        <span class="badge badge-${limit.color} me-1">
+                            ${limit.name}: ${limit.limit}
+                        </span>
+                    `;
+                });
+                limitsHtml += '</div>';
+            }
+            
+        html += `
+          <tr class="detail-row" id="detail-${index}" style="display: none;">
+            <td colspan="5">
+              <div class="p-3 bg-light rounded">
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>Reference Document:</strong> ${item.reference_doc || '—'}<br>
+                    <strong>Material ID:</strong> ${item.material || '—'}
+                  </div>
+                  <div class="col-md-6">
+                    ${limitsHtml}
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+        });
+        
+    tableBody.innerHTML = html;
+    // Ensure any empty upload-time fields show a dummy timestamp until real uploads exist
+    fillDummyUploadTimestamps();
+    // Re-apply declaration-aware actions if we've already indexed them
+    try {
+      if (typeof declIndexByMaterial === 'object' && declIndexByMaterial) {
+        applyDeclarationsToRows();
+      }
+    } catch (e) { /* noop */ }
+  }
+    
+    // Update results counter
+    function updateResultsCounter(count) {
+        const counter = document.querySelector('.results-counter');
+        if (counter) {
+            counter.textContent = `Showing ${count} result${count !== 1 ? 's' : ''}`;
+        }
+    }
+    
+    // Update region indicator
+    function updateRegionIndicator(region) {
+        const regionLabel = regionFilter.options[regionFilter.selectedIndex].text;
+        if (region === 'all') {
+            regionIndicator.style.display = 'none';
+        } else {
+            regionText.textContent = regionLabel;
+            regionIndicator.style.display = 'inline-flex';
+        }
+    }
+    
+    // Update URL without page reload
+    function updateURL(region) {
+        const url = new URL(window.location);
+        if (region && region !== 'all') {
+            url.searchParams.set('region', region);
+        } else {
+            url.searchParams.delete('region');
+        }
+        window.history.replaceState({}, '', url);
+    }
+    
+    // Show/hide loading indicators
+    function showLoading(show) {
+        const loaders = document.querySelectorAll('.loading-overlay');
+        loaders.forEach(loader => {
+            loader.style.display = show ? 'flex' : 'none';
+        });
+    }
+    
+    // Show error message
+    function showError(message) {
+        const tableBody = document.getElementById('pfasTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="100%" class="text-center text-danger py-3">
+                        <i class="bi bi-exclamation-triangle"></i> ${message}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    function showError(message) {
+        const tableBody = document.getElementById('ppwrTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="100%" class="text-center text-danger py-3">
+                        <i class="bi bi-exclamation-triangle"></i> ${message}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    // Toggle details row
+  // Open upload filepicker for a specific row index (re-uses single hidden input)
+  window.openUpload = function(index) {
+    const input = document.getElementById('globalUploadInput');
+    if (!input) return;
+    input.dataset.index = index;
+    // reset value so change event fires even if same file chosen twice
+    input.value = null;
+    input.click();
+  };
+
+  // handle file selection and upload
+  const uploadInput = document.getElementById('globalUploadInput');
+  if (uploadInput) {
+    uploadInput.addEventListener('change', function(evt) {
+      const file = this.files && this.files[0];
+      const index = this.dataset.index;
+      if (!file) return;
+
+      // basic upload - endpoint must be provided server-side (adjust as needed)
+      const form = new FormData();
+      form.append('file', file);
+      form.append('sku', (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : ''));
+      form.append('index', index);
+      // include material id for server to associate the upload
+      try {
+        const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+        const material = rowEl ? rowEl.dataset.material : '';
+        form.append('material', material);
+      } catch (e) { /* ignore */ }
+
+      fetch('/api/assessment-upload', {
+        method: 'POST',
+        body: form
+      })
+      .then(r => r.json())
+      .then(resp => {
+        if (resp && resp.success) {
+          // Optionally show success (small alert) and refresh data
+          alert('File uploaded successfully');
+          // update the upload-time text for the related row (use server time if provided)
+          const timestamp = resp.updated_at || new Date().toLocaleString();
+          // find the upload-time element associated with the index
+          const uploadElem = document.querySelector(`.upload-time[data-index="${index}"]`);
+          if (uploadElem) uploadElem.textContent = timestamp;
+          // If API returns updated row info, you could refresh the table here
+          // location.reload(); // or call filtering function to refresh
+        } else {
+          console.error('Upload failed', resp);
+          alert('Upload failed');
+        }
+      })
+      .catch(err => {
+        console.error('Upload error', err);
+        alert('Upload error');
+      })
+      .finally(() => { uploadInput.value = null; delete uploadInput.dataset.index; });
+    });
+  }
+
+  // Delegated click handler for toggle/upload actions
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const index = btn.dataset.index;
+    const inPPWR = !!btn.closest('tbody#ppwrTableBody');
+    if (action === 'toggle') {
+      toggleDetails(index, btn);
+    } else if (action === 'upload') {
+      // Prevent default navigation and suppress other handlers
+      try { e.preventDefault(); e.stopPropagation(); } catch(_) {}
+      // Open the upload modal; modal has its own "Apply to duplicates" checkbox
+      console.debug('Upload clicked for index', index);
+      // on-screen debug (helpful when DevTools isn't open)
+      try { const dbg = document.getElementById('mu-debug'); if (dbg) { dbg.style.display = 'block'; dbg.textContent = 'upload-click index=' + index; } } catch(e) {}
+      try {
+        const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+        const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+        // Ensure mu_state exists before assigning
+        if (typeof mu_state === 'undefined') window.mu_state = { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+        mu_state.rowIndex = index;
+        mu_state.rowMaterial = material;
+        mu_state.files = [];
+        mu_state.sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+        const label = document.getElementById('mu-row-label'); if (label) label.textContent = material || index;
+        const fileInput = document.getElementById('mu-file-input'); if (fileInput) fileInput.value = '';
+        if (typeof mu_render_list === 'function') mu_render_list();
+        // Open the upload modal (no Bootstrap JS dependency)
+        if (typeof mu_open_modal === 'function') { mu_open_modal(); return; }
+        // Fallback
+        openMultiUpload(index);
+      } catch (e) {
+        console.warn('Upload click handling failed, falling back to single upload', e);
+        openMultiUpload(index);
+      }
+    } else if (action === 'supplier-upload') {
+      // New flow: allow single uploads via Supplier Declaration button with "Apply to duplicates" checkbox
+      try {
+        const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+        const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+        if (typeof mu_state === 'undefined') window.mu_state = { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+        mu_state.rowIndex = index;
+        mu_state.rowMaterial = material;
+        mu_state.files = [];
+        mu_state.sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+        const label = document.getElementById('mu-row-label'); if (label) label.textContent = material || index;
+        const fileInput = document.getElementById('mu-file-input'); if (fileInput) { fileInput.value = ''; fileInput.multiple = false; }
+        if (typeof mu_render_list === 'function') mu_render_list();
+        if (typeof mu_open_modal === 'function') { mu_open_modal(); return; }
+        openMultiUpload(index);
+      } catch (e) {
+        console.warn('Supplier upload click failed', e);
+        openMultiUpload(index);
+      }
+    } else if (action === 'eval-decl') {
+      try {
+        const declId = btn.dataset.declId;
+        const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+        const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+        evaluateDeclForRow(index, declId, material);
+      } catch (err) {
+        console.error('Evaluate click error', err);
+      }
+    } else if (action === 'clear-row') {
+      // revert to default upload UI but keep the server file intact
+      renderActionsForRow(index, null);
+    } else if (action === 'archive-decl') {
+      const declId = btn.dataset.declId
+      if (!declId) return;
+      // capture material for local index cleanup
+      const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+      const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+      fetch(`/api/supplier-declarations/${encodeURIComponent(declId)}?sku=${encodeURIComponent(sku)}`, { method: 'DELETE' })
+        .then(r => r.json().then(j => ({ ok: r.ok, data: j })).catch(() => ({ ok: r.ok, data: {} })))
+        .then(({ ok, data }) => {
+          if (!ok) throw new Error(data.error || data.message || 'Archive failed');
+          // remove decl association for this row
+          renderActionsForRow(index, null);
+          try { if (declIndexByMaterial && material) { delete declIndexByMaterial[material]; } } catch (e) {}
+          // Refresh declarations index to avoid stale UI if duplicates exist
+          return fetchDeclarationsIndex();
+        })
+        .then(() => {
+          try {
+            const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+            const mat = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+            const decl = mat && declIndexByMaterial ? declIndexByMaterial[mat] : null;
+            renderActionsForRow(index, decl);
+          } catch (e) { /* ignore */ }
+        })
+        .catch(err => {
+          alert('Delete failed: ' + (err.message || err));
+        });
+    }
+  });
+
+  // Toggle details row safely (buttonElem is optional)
+  function toggleDetails(index, buttonElem) {
+    const detailRow = document.getElementById(`detail-${index}`);
+    if (!detailRow) return;
+    let icon = null;
+    if (buttonElem) {
+      icon = buttonElem.querySelector('i');
+    } else {
+      // find the button in the row if not provided
+      const row = document.querySelector(`tr.data-row[data-index="${index}"]`);
+      if (row) icon = row.querySelector('button[data-action="toggle"] i');
+    }
+
+    const isOpen = detailRow.style.display === 'table-row';
+    detailRow.style.display = isOpen ? 'none' : 'table-row';
+    if (icon) icon.className = isOpen ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+  }
+
+  // Removed default dummy timestamp filler for pre-upload cells
+
+  // -------- Declarations-aware row action replacement --------
+
+  let declIndexByMaterial = null;
+
+  async function fetchDeclarationsIndex() {
+    try {
+      const skuVal = (typeof window.SKU !== 'undefined' && window.SKU) || (typeof sku !== 'undefined' ? sku : '') || (document.body.dataset ? document.body.dataset.sku : '');
+      if (!skuVal) { console.warn('No SKU available for declarations fetch'); declIndexByMaterial = {}; return {}; }
+      const resp = await fetch(`/api/supplier-declarations/${encodeURIComponent(skuVal)}?include_archived=0`);
+      const data = await resp.json();
+      const items = (data && data.declarations) ? data.declarations : [];
+      // TEMP DEBUG: log declarations fetched for troubleshooting
+      try { console.log('[DEBUG] fetchDeclarationsIndex SKU=', skuVal, 'declarations:', items); } catch(_) {}
+      // Build up-to-two-recent-per-material map (arrays sorted by upload_date desc)
+      const map = {};
+      for (const d of items) {
+        const mat = d.material || d.material_id || '';
+        if (!mat) continue;
+        if (!map[mat]) map[mat] = [];
+        map[mat].push(d);
+      }
+      // sort and trim to two most recent
+      for (const k of Object.keys(map)) {
+        map[k].sort((a,b) => {
+          const ta = a.upload_date ? Date.parse(a.upload_date) : 0;
+          const tb = b.upload_date ? Date.parse(b.upload_date) : 0;
+          return tb - ta;
+        });
+        if (map[k].length > 2) map[k] = map[k].slice(0,2);
+      }
+      declIndexByMaterial = map;
+      // Update mapped count UI if present
+      try { updateMappedCountUI(items); } catch (_) {}
+      return map;
+    } catch (e) {
+      console.warn('Failed to fetch declarations', e);
+      declIndexByMaterial = {};
+      return {};
+    }
+  }
+
+  // Update mapped/unmapped count display without requiring a manual refresh
+  function updateMappedCountUI(items) {
+    try {
+      const arr = Array.isArray(items) ? items : [];
+      const mappedCount = arr.filter(d => !!(d && (d.material || d.mapped_to))).length;
+      const unmappedCount = arr.length - mappedCount;
+      // Find any elements showing the donut/legend or counters
+      const mappedLegend = document.querySelector('[data-role="mapped-count"]');
+      const unmappedLegend = document.querySelector('[data-role="unmapped-count"]');
+      const donutLabel = document.querySelector('[data-role="mapped-donut-label"]');
+      if (mappedLegend) mappedLegend.textContent = String(mappedCount);
+      if (unmappedLegend) unmappedLegend.textContent = String(unmappedCount);
+      if (donutLabel) donutLabel.textContent = `Mapped (${mappedCount})`;
+    } catch (_) { /* noop */ }
+  }
+
+  function renderActionsForRow(index, decls) {
+    try {
+      // choose cell selector depending on table (PPWR table layout includes checkbox column)
+      const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+      if (!rowEl) return;
+      let cell = null;
+      const tbodyId = rowEl.closest('tbody') ? rowEl.closest('tbody').id : null;
+      if (tbodyId === 'ppwrTableBody') {
+        cell = rowEl.querySelector('td:nth-child(4) > div');
+      } else {
+        cell = rowEl.querySelector('td:nth-child(3) > div');
+      }
+      if (!cell) return;
+      // Render upload button always and, for PPWR, show up to two recent files if available
+      if (Array.isArray(decls) && decls.length > 0) {
+        // Always show the latest file name and timestamp beside the upload button
+        const latest = decls[0];
+        const fname = (latest.original_filename || latest.filename) || 'file';
+        const ts = latest.upload_date ? new Date(latest.upload_date).toLocaleString() : '';
+        const fileInfo = `<span class="small text-muted ms-2"><a href="/api/supplier-declarations/download/${latest.id}" target="_blank">${escapeHtml(fname)}</a> • ${ts}</span>`;
+        const downloadHref = latest && latest.id ? `/api/supplier-declarations/download/${latest.id}` : null;
+        const downloadBtn = downloadHref ? `<a class="btn btn-sm btn-outline-secondary" data-role="row-download" href="${downloadHref}" target="_blank" title="Download latest file"><i class="bi bi-download"></i></a>` : `<button class="btn btn-sm btn-outline-secondary" disabled title="No file to download"><i class="bi bi-download"></i></button>`;
+        const uploadBtn = `<button class="btn btn-sm btn-outline-success" data-action="upload" data-index="${index}" title="Upload file"><i class="bi bi-upload"></i></button>`;
+        cell.innerHTML = `
+          <div class="d-flex align-items-center gap-2">
+            ${uploadBtn}
+            ${downloadBtn}
+            ${fileInfo}
+          </div>`;
+      } else {
+        // For PPWR, provide Supplier Declaration single-upload button + timestamp area
+        if (tbodyId === 'ppwrTableBody') {
+          cell.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm btn-outline-success" data-action="upload" data-index="${index}" title="Upload file"><i class="bi bi-upload"></i></button>
+              <button class="btn btn-sm btn-outline-secondary" disabled title="No file to download"><i class="bi bi-download"></i></button>
+              <span class="small text-muted upload-time ms-2" data-index="${index}"></span>
+            </div>`;
+        } else {
+          // fallback to default Upload button (no mapped declarations)
+          cell.innerHTML = `
+            <button class="btn btn-sm btn-outline-success" data-action="upload" data-index="${index}" title="Upload file">
+              <i class="bi bi-upload"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" disabled title="No file to download"><i class="bi bi-download"></i></button>
+            <div class="small text-muted upload-time mt-1" data-index="${index}"></div>`;
+        }
+      }
+    } catch (e) { console.warn('renderActionsForRow error', e); }
+  }
+
+  function applyDeclarationsToRows(highlightMaterial) {
+    const rows = document.querySelectorAll('tbody#ppwrTableBody tr.data-row');
+    rows.forEach(row => {
+      const idx = row.getAttribute('data-index');
+      const mat = row.getAttribute('data-material') || '';
+      const decls = declIndexByMaterial ? declIndexByMaterial[mat] : null;
+      // Always re-render the row; pass null when there are no declarations so the upload-time area is cleared
+      renderActionsForRow(idx, decls || null);
+      if (highlightMaterial && mat === highlightMaterial) {
+        // ensure the row is updated and scrolled into view
+        renderActionsForRow(idx, decls || null);
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+    // Extra safety: clear any leftover upload-time entries for rows that have no declarations
+    try {
+      rows.forEach(row => {
+        const idx = row.getAttribute('data-index');
+        const mat = row.getAttribute('data-material') || '';
+        const decls = declIndexByMaterial ? declIndexByMaterial[mat] : null;
+        if (!decls || (Array.isArray(decls) && decls.length === 0)) {
+          const ut = document.querySelector(`.upload-time[data-index="${idx}"]`);
+          if (ut) ut.innerHTML = '';
+        }
+      });
+    } catch (e) { /* noop */ }
+  }
+
+  (async function bootstrapRowActions() {
+    const params = new URLSearchParams(window.location.search);
+    const highlightMat = params.get('highlight_material') || params.get('material') || '';
+    await fetchDeclarationsIndex();
+    applyDeclarationsToRows(highlightMat);
+  })();
+
+  // --- Batch selection and action helpers for PPWR ---
+  function getPPWRSelected() {
+    const rows = [];
+    document.querySelectorAll('.ppwr-select-checkbox:checked').forEach(cb => {
+      const idx = cb.getAttribute('data-index');
+      const mat = cb.getAttribute('data-material') || '';
+      let decl = null;
+      try { decl = declIndexByMaterial && mat ? declIndexByMaterial[mat] : null; } catch (e) { decl = null; }
+      rows.push({ index: idx, material: mat, decl: decl });
+    });
+    return rows;
+  }
+
+  function updatePPWRActionBar() {
+    const selected = getPPWRSelected();
+    const count = selected.length;
+    const bar = document.getElementById('ppwr-action-bar');
+    const countEl = document.getElementById('ppwrSelectedCount');
+    if (bar) bar.style.display = count ? 'flex' : 'none';
+    if (countEl) countEl.textContent = `${count} selected`;
+    const topAll = document.getElementById('ppwr-select-all-top');
+    const hdrAll = document.getElementById('ppwr-select-all');
+    if (topAll) topAll.checked = document.querySelectorAll('.ppwr-select-checkbox').length === document.querySelectorAll('.ppwr-select-checkbox:checked').length && document.querySelectorAll('.ppwr-select-checkbox').length>0;
+    if (hdrAll) hdrAll.checked = topAll.checked;
+  }
+
+  // Event delegation: when any checkbox changes, update the bar
+  // --- PPWR evaluation wiring (run only when Evaluate is clicked) ---
+  const ppwrEvalBtn = document.getElementById('ppwrEvaluateBtn');
+  const ppwrResultsSection = document.getElementById('ppwrResultsSection');
+  const ppwrResultsBody = document.getElementById('ppwrResultsBody');
+  const ppwrEvalLoading = document.getElementById('ppwrEvalLoading');
+
+  // New EvaluateBtn opens the standalone evaluation page in the same tab
+  const EvaluateBtn = document.getElementById('EvaluateBtn');
+  if (EvaluateBtn) {
+    EvaluateBtn.addEventListener('click', function(e) {
+      try {
+        // If this is an anchor, allow native navigation and do not preventDefault
+        const isAnchor = (EvaluateBtn.tagName || '').toLowerCase() === 'a';
+        if (isAnchor) return; // let browser follow the href
+        e.preventDefault();
+        window.location.href = '/ppwr/evaluation';
+      } catch (err) {
+        console.warn('EvaluateBtn navigation failed, falling back to inline evaluate', err);
+        try { runPpwrEvaluateFlow(); } catch (_) {}
+      }
+    });
+  }
+
+  function ppwrSetLoading(isLoading) {
+    if (!ppwrEvalLoading) return;
+    ppwrEvalLoading.style.display = isLoading ? 'flex' : 'none';
+  }
+
+  function collectPpwrRowMeta() {
+    const meta = {};
+    document.querySelectorAll('#ppwrTableBody tr.data-row').forEach(tr => {
+      const idx = tr.dataset.index;
+      const material = tr.dataset.material || '';
+      const component = (tr.querySelector('td:nth-child(2) strong')?.textContent || '').trim();
+      const subcomponent = (tr.querySelector('td:nth-child(2) .small')?.textContent || '').trim();
+      const materialName = (tr.querySelector('td:nth-child(3) div:first-child')?.textContent || '').trim();
+      meta[material] = { idx, material, component, subcomponent, materialName };
+    });
+    return meta;
+  }
+
+  function buildPpwrRow(meta, assessment) {
+    const statusGood = assessment?.ppwr_compliant === true;
+    const restricted = assessment?.restricted_substances || assessment?.restricted_substances_json;
+    const restrictedList = Array.isArray(restricted) ? restricted : [];
+    const chem = restrictedList.length ? restrictedList[0] : '—';
+    return `
+      <tr>
+        <td>${meta.component || '—'}</td>
+        <td>${meta.subcomponent || '—'}</td>
+        <td><div>${meta.materialName || '—'}</div><div class="small text-muted">${meta.material || '—'}</div></td>
+        <td>${assessment?.supplier_name || '—'}</td>
+        <td>${chem || '—'}</td>
+        <td><span class="ppwr-status-pill ${statusGood ? 'good' : 'bad'}">${statusGood ? 'Compliance' : 'Non-Compliance'}</span></td>
+        <td>${assessment?.cas_number || '—'}</td>
+        <td>${assessment?.packaging_recyclability || assessment?.recycled_content_percent || '—'}</td>
+      </tr>`;
+  }
+
+  function renderPpwrResults(map) {
+    if (!ppwrResultsSection || !ppwrResultsBody) return;
+    const metaMap = collectPpwrRowMeta();
+    const materials = Object.keys(metaMap);
+    const rows = [];
+    let compliant = 0;
+    let non = 0;
+    let evaluated = 0;
+
+    materials.forEach(m => {
+      const a = map[m];
+      if (a) {
+        evaluated += 1;
+        if (a.ppwr_compliant === false) non += 1; else compliant += 1;
+      }
+      rows.push(buildPpwrRow(metaMap[m], a));
+    });
+
+    ppwrResultsBody.innerHTML = rows.join('');
+    document.getElementById('ppwrMetricTotal')?.innerText = materials.length;
+    document.getElementById('ppwrMetricEvaluated')?.innerText = evaluated;
+    document.getElementById('ppwrMetricNon')?.innerText = non;
+    document.getElementById('ppwrMetricYes')?.innerText = compliant;
+    ppwrResultsSection.style.display = 'block';
+    ppwrResultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function fetchPpwrAssessments(materialIds) {
+    const resp = await fetch('/api/ppwr/assessments/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ material_ids: materialIds })
+    });
+    if (!resp.ok) throw new Error('Assessments fetch failed');
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Assessments fetch failed');
+    return data.assessments || {};
+  }
+
+  async function runPpwrEvaluateFlow() {
+    const materials = Array.from(new Set(Array.from(document.querySelectorAll('#ppwrTableBody tr.data-row')).map(tr => tr.dataset.material).filter(Boolean)));
+    if (!materials.length) {
+      mu_toast('No materials found for PPWR', 'PPWR', 'warning', 2500);
+      return;
+    }
+    ppwrSetLoading(true);
+    mu_toast('Running PPWR evaluation…', 'PPWR', 'info', 2500);
+    try {
+      await fetch('/ppwr/declarations/evaluate-all', { method: 'POST' });
+    } catch (e) {
+      console.warn('Evaluate-all error', e);
+    }
+    try {
+      const map = await fetchPpwrAssessments(materials);
+      renderPpwrResults(map);
+      mu_toast('PPWR evaluation complete', 'PPWR', 'success', 2500);
+    } catch (err) {
+      console.error(err);
+      mu_toast('Failed to load PPWR results', 'PPWR', 'danger', 3000);
+    } finally {
+      ppwrSetLoading(false);
+    }
+  }
+
+  ppwrEvalBtn?.addEventListener('click', runPpwrEvaluateFlow);
+
+  /**
+   * Session-based selection tracking
+   * No database columns needed - pure UI state management
+   */
+  let selectedMaterials = new Set();
+
+  /**
+   * Attach checkbox event listeners after table load/reload
+   * Call this after populating ppwrTableBody to wire up all checkboxes
+   * Handles both table header and action bar Select All checkboxes
+   */
+  function attachCheckboxListeners() {
+    // Select All checkbox in table header
+    const selectAllCheckbox = document.getElementById('ppwr-select-all');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.removeEventListener('change', handleSelectAllChange);
+      selectAllCheckbox.addEventListener('change', handleSelectAllChange);
+    }
+
+    // Select All checkbox in action bar (top)
+    const selectAllTopCheckbox = document.getElementById('ppwr-select-all-top');
+    if (selectAllTopCheckbox) {
+      selectAllTopCheckbox.removeEventListener('change', handleSelectAllChange);
+      selectAllTopCheckbox.addEventListener('change', handleSelectAllChange);
+    }
+
+    // Individual row checkboxes
+    const rowCheckboxes = document.querySelectorAll('.ppwr-select-checkbox');
+    rowCheckboxes.forEach(checkbox => {
+      checkbox.removeEventListener('change', handleRowCheckboxChange);
+      checkbox.addEventListener('change', handleRowCheckboxChange);
+    });
+
+    // Sync initial state
+    updateSelectAllCheckboxState();
+    updateBulkButtons();
+  }
+
+  /**
+   * Handle Select All checkbox change
+   * Toggles all row checkboxes and updates session Set
+   * Supports both table header and top action bar checkboxes
+   */
+  function handleSelectAllChange(e) {
+    const isChecked = e.target.checked;
+    const checkboxId = e.target.id;
+    const rowCheckboxes = document.querySelectorAll('.ppwr-select-checkbox');
+    
+    // Sync both Select All checkboxes (table header + action bar)
+    if (checkboxId === 'ppwr-select-all') {
+      const topCheckbox = document.getElementById('ppwr-select-all-top');
+      if (topCheckbox) topCheckbox.checked = isChecked;
+    } else if (checkboxId === 'ppwr-select-all-top') {
+      const headerCheckbox = document.getElementById('ppwr-select-all');
+      if (headerCheckbox) headerCheckbox.checked = isChecked;
+    }
+    
+    // Toggle all row checkboxes
+    rowCheckboxes.forEach(checkbox => {
+      checkbox.checked = isChecked;
+      const materialId = checkbox.dataset.material;
+      
+      if (isChecked && materialId) {
+        selectedMaterials.add(materialId);
+      } else {
+        selectedMaterials.delete(materialId);
+      }
+    });
+
+    // Update UI states
+    updateSelectAllCheckboxState();
+    updateBulkButtons();
+    updatePPWRActionBar();
+    console.debug('Select All toggled:', isChecked, 'Selected materials:', selectedMaterials.size);
+  }
+
+  /**
+   * Handle individual row checkbox change
+   * Updates session Set and syncs Select All checkbox state
+   */
+  function handleRowCheckboxChange(e) {
+    const checkbox = e.target;
+    const materialId = checkbox.dataset.material;
+    
+    if (checkbox.checked && materialId) {
+      selectedMaterials.add(materialId);
+    } else {
+      selectedMaterials.delete(materialId);
+    }
+
+    updateSelectAllCheckboxState();
+    updateBulkButtons();
+    updatePPWRActionBar();
+    console.debug('Row checkbox changed:', materialId, 'Total selected:', selectedMaterials.size);
+  }
+
+  /**
+   * Update Select All checkbox state based on individual selections
+   * Supports indeterminate state (dash icon) for partial selection
+   * Syncs both table header and action bar checkboxes
+   */
+  function updateSelectAllCheckboxState() {
+    const selectAllCheckbox = document.getElementById('ppwr-select-all');
+    const selectAllTopCheckbox = document.getElementById('ppwr-select-all-top');
+    
+    const rowCheckboxes = document.querySelectorAll('.ppwr-select-checkbox');
+    const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+    const totalCount = rowCheckboxes.length;
+
+    let checked = false;
+    let indeterminate = false;
+
+    if (checkedCount === 0) {
+      // No checkboxes selected
+      checked = false;
+      indeterminate = false;
+    } else if (checkedCount === totalCount) {
+      // All checkboxes selected
+      checked = true;
+      indeterminate = false;
+    } else {
+      // Some checkboxes selected (partial selection) - show dash/hyphen
+      checked = false;
+      indeterminate = true;
+    }
+
+    // Apply state to both Select All checkboxes
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = checked;
+      selectAllCheckbox.indeterminate = indeterminate;
+    }
+    if (selectAllTopCheckbox) {
+      selectAllTopCheckbox.checked = checked;
+      selectAllTopCheckbox.indeterminate = indeterminate;
+    }
+  }
+
+  /**
+   * Update bulk action button states based on selection
+   * Enables buttons when selection exists, disables when empty
+   */
+  function updateBulkButtons() {
+    const hasSelection = selectedMaterials.size > 0;
+    const deleteBtn = document.getElementById('ppwrBulkDelete');
+    const downloadBtn = document.getElementById('ppwrBulkDownload');
+    const evaluateBtn = document.getElementById('ppwrBulkEvaluate');
+    
+    if (deleteBtn) deleteBtn.disabled = !hasSelection;
+    if (downloadBtn) downloadBtn.disabled = !hasSelection;
+    if (evaluateBtn) evaluateBtn.disabled = !hasSelection;
+
+    // Update selection count display
+    const countEl = document.getElementById('ppwrSelectedCount');
+    if (countEl) {
+      countEl.textContent = hasSelection ? `${selectedMaterials.size} selected` : 'None selected';
+    }
+
+    console.debug('Bulk buttons updated:', hasSelection ? 'enabled' : 'disabled', selectedMaterials.size);
+  }
+
+  // Replace the Evaluate button for PPWR with a link to the evaluation page
+  // Jinja include removed from inside <script> to avoid syntax errors
+
+  // Batch action handlers (Evaluate handled by ppwrEvaluateBtn click)
+
+  document.getElementById('ppwrBulkDelete')?.addEventListener('click', async function() {
+    // Ensure declarations index is up-to-date before collecting ids (fixes race conditions)
+    await fetchDeclarationsIndex().catch(() => {});
+    const rows = getPPWRSelected();
+    if (!rows.length) return mu_toast('No rows selected', 'PPWR', 'info');
+    if (!confirm(`Delete ${rows.length} selected declaration(s)? This will remove the file.`)) return;
+    const promises = [];
+    const toDelete = [];
+    rows.forEach(r => {
+      const decls = Array.isArray(r.decl) ? r.decl : (r.decl ? [r.decl] : []);
+      for (const decl of decls) {
+        if (decl && decl.id) toDelete.push(decl.id);
+      }
+    });
+    console.debug('PPWR delete - collected ids', toDelete);
+    if (!toDelete.length) {
+      mu_toast('No declaration files found for selected rows', 'PPWR', 'warning', 2000);
+      return;
+    }
+    mu_toast(`Deleting ${toDelete.length} file(s)...`, 'PPWR', 'info', 2000);
+    // Build promises for each decl id
+    toDelete.forEach(id => {
+      const url = `/api/supplier-declarations/${encodeURIComponent(id)}?sku=${encodeURIComponent(sku)}`;
+      promises.push(fetch(url, { method: 'DELETE' }).then(async res => {
+        let j = null;
+        try { j = await res.json(); } catch (e) { j = null; }
+        return { ok: res.ok, status: res.status, body: j, id };
+      }).catch(e => ({ ok: false, status: 0, body: { error: String(e) }, id })));
+    });
+
+    Promise.all(promises).then(async results => {
+      const failed = results.filter(r => !r.ok);
+      if (failed.length) {
+        console.warn('Some deletes failed', failed);
+        mu_toast(`${failed.length} delete(s) failed`, 'PPWR', 'warning', 3000);
+      } else {
+        mu_toast('Delete operations completed', 'PPWR', 'success', 2000);
+      }
+      // Immediately clear per-row upload-time UI and mapped displays for selected rows to avoid stale UI
+      try {
+        rows.forEach(r => {
+          try {
+            // Clear upload-time area
+            const ut = document.querySelector(`.upload-time[data-index="${r.index}"]`);
+            if (ut) ut.innerHTML = '';
+            // Clear any inline PPWR assessment result in detail row
+            const detailRow = document.getElementById(`detail-${r.index}`);
+            if (detailRow) {
+              const inlineBox = detailRow.querySelector('.ppwr-inline-result');
+              if (inlineBox) inlineBox.remove();
+            }
+            // Re-render actions area with no mapped declarations
+            renderActionsForRow(r.index, null);
+          } catch (e) { console.warn('Row clear error', e); }
+          // Remove local declaration index for this material so mapped files below disappear instantly
+          try {
+            if (declIndexByMaterial && r.material) {
+              delete declIndexByMaterial[r.material];
+            }
+          } catch (e) { /* noop */ }
+        });
+      } catch (e) { console.warn('Immediate UI clear failed', e); }
+
+      // Try to unmap any remaining links for the selected materials on the server side
+      try {
+        const uniqueMaterials = Array.from(new Set(rows.map(r => r.material).filter(Boolean)));
+        const unmapCalls = uniqueMaterials.map(mat => {
+          // Prefer a dedicated unmap endpoint if available
+          const body = `material_id=${encodeURIComponent(mat)}&sku=${encodeURIComponent(sku)}&apply_to_duplicates=1`;
+          return fetch('/api/ppwr/supplier-declarations/unmap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body
+          }).then(res => res.ok).catch(() => false);
+        });
+        await Promise.all(unmapCalls);
+      } catch (e) {
+        console.debug('Unmap calls skipped or failed', e);
+      }
+      // refresh declarations index and UI (authoritative)
+      fetchDeclarationsIndex().then(() => { applyDeclarationsToRows(); updatePPWRActionBar(); }).catch(() => { applyDeclarationsToRows(); updatePPWRActionBar(); });
+    }).catch(err => {
+      console.error('Delete promise error', err);
+      mu_toast('Delete operation encountered an error', 'PPWR', 'danger', 3000);
+    });
+  });
+  document.getElementById('ppwrBulkDownload')?.addEventListener('click', function() {
+    const rows = getPPWRSelected();
+    if (!rows.length) return mu_toast('No rows selected', 'PPWR', 'info');
+    // For each selected row download all declarations shown (up to two)
+    let any = false;
+    rows.forEach(r => {
+      const decls = Array.isArray(r.decl) ? r.decl : (r.decl ? [r.decl] : []);
+      for (const decl of decls) {
+        if (decl && decl.id) {
+          any = true;
+          const a = document.createElement('a');
+          a.href = `/api/supplier-declarations/download/${encodeURIComponent(decl.id)}`;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+      }
+    });
+    if (!any) mu_toast('No declaration files available for selected rows', 'PPWR', 'warning', 2500);
+  });
+
+  // ==================== NEW PPWR BULK ACTIONS WITH SESSION-BASED CHECKBOXES ====================
+  
+  /**
+   * Load PPWR declarations table data via new API
+   * Replaces inline table population with clean API call
+   */
+  async function loadPPWRDeclarationsTable_v2() {
+    if (!sku) {
+      console.warn('SKU not set, cannot load PPWR declarations');
+      return;
+    }
+    
+    try {
+      const resp = await fetch(`/api/ppwr/declarations/${encodeURIComponent(sku)}`);
+      const data = await resp.json();
+      
+      if (!data.success) {
+        console.error('Failed to load declarations:', data.error);
+        mu_toast('Failed to load declarations', 'PPWR', 'danger', 3000);
+        return;
+      }
+      
+      // Populate ppwrTableBody with data.rows
+      const tbody = document.getElementById('ppwrTableBody');
+      if (!tbody) return;
+      
+      if (data.rows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox mb-2" style="font-size: 2rem;"></i>
+              <div>No materials found for this SKU</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      let html = '';
+      data.rows.forEach((row, index) => {
+        const uploadTime = row.uploaded_at ? new Date(row.uploaded_at).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : '';
+        const hasDeclaration = row.has_declaration || row.original_filename;
+        const materialId = row.material_id;
+        
+        html += `
+          <tr class="data-row" data-index="${index}" data-material="${materialId}">
+            <td>
+              <input type="checkbox" id="ppwr-select-${index}" class="form-check-input ppwr-select-checkbox" 
+                     data-index="${index}" data-material="${materialId}" 
+                     ${!hasDeclaration ? 'disabled' : ''}
+                     title="Select row ${index}" aria-label="Select row ${index}">
+            </td>
+            <td>
+              <div><strong>${materialId}</strong></div>
+              <div class="small text-muted">${row.material_name || ''}</div>
+            </td>
+            <td>${row.supplier_name || '—'}</td>
+            <td>
+              ${hasDeclaration ? `
+                <div>
+                  <a href="/api/supplier-declarations/download/${materialId}" class="text-decoration-none" target="_blank">
+                    <i class="bi bi-file-earmark-pdf text-danger"></i> ${row.declaration_filename || row.original_filename}
+                  </a>
+                  ${row.file_size ? `<br><small class="text-muted">${(row.file_size / 1024).toFixed(1)} KB</small>` : ''}
+                </div>
+                ${uploadTime ? `<div class="small text-muted mt-1"><i class="bi bi-clock"></i> ${uploadTime}</div>` : ''}
+              ` : `
+                <span class="text-muted fst-italic"><i class="bi bi-exclamation-circle text-warning"></i> Not uploaded</span>
+              `}
+            </td>
+            <td>
+              ${hasDeclaration ? `
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleRowDetails('${materialId}')" title="Show details">
+                  <i class="bi bi-chevron-down"></i> Details
+                </button>
+              ` : `
+                <button class="btn btn-sm btn-primary" data-action="upload" data-material="${materialId}" title="Upload file">
+                  <i class="bi bi-upload"></i> Upload
+                </button>
+              `}
+            </td>
+          </tr>
+        `;
+      });
+      
+      tbody.innerHTML = html;
+      
+      // CRITICAL: Attach checkbox listeners after DOM update
+      attachCheckboxListeners();
+      updatePPWRActionBar();
+      
+    } catch (error) {
+      console.error('Error loading PPWR declarations:', error);
+      mu_toast('Error loading declarations table', 'PPWR', 'danger', 3000);
+    }
+  }
+
+  /**
+   * Toggle inline expansion row for material details
+   * Shows Supplier Campaign and Supplier Name only
+   */
+  function toggleRowDetails(materialId) {
+    const existingDetailsRow = document.getElementById(`details-${materialId}`);
+    
+    if (existingDetailsRow) {
+      // Close if already open
+      existingDetailsRow.remove();
+      // Change icon back to down
+      const btn = document.querySelector(`button[onclick="toggleRowDetails('${materialId}')"]`);
+      if (btn) {
+        btn.querySelector('i').className = 'bi bi-chevron-down';
+      }
+      return;
+    }
+    
+    // Fetch material details from backend
+    fetch(`/api/ppwr/material-details/${encodeURIComponent(materialId)}`)
+      .then(resp => resp.json())
+      .then(data => {
+        if (!data.success) {
+          mu_toast(data.error || 'Failed to fetch material details', 'PPWR', 'danger', 3000);
+          return;
+        }
+        
+        // Find the parent row
+        const parentRow = document.querySelector(`tr[data-material="${materialId}"]`);
+        if (!parentRow) return;
+        
+        // Create expansion row
+        const detailsRow = document.createElement('tr');
+        detailsRow.id = `details-${materialId}`;
+        detailsRow.className = 'bg-light';
+        detailsRow.innerHTML = `
+          <td colspan="6" class="p-3">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="card-title mb-3">
+                  <i class="bi bi-info-circle text-primary"></i>
+                  Material Details: <strong>${materialId}</strong>
+                </h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="mb-2">
+                      <strong>Supplier Campaign:</strong> 
+                      <span class="badge ${data.supplier_campaign ? 'bg-success' : 'bg-warning text-dark'}">
+                        ${data.supplier_campaign || 'Not Assigned'}
+                      </span>
+                    </p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-2">
+                      <strong>Supplier Name:</strong> 
+                      <span class="text-dark">${data.supplier_name || '—'}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        `;
+        
+        // Insert after parent row
+        parentRow.after(detailsRow);
+        
+        // Change icon to up
+        const btn = document.querySelector(`button[onclick="toggleRowDetails('${materialId}')"]`);
+        if (btn) {
+          btn.querySelector('i').className = 'bi bi-chevron-up';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching material details:', error);
+        mu_toast('Failed to load material details', 'PPWR', 'danger', 3000);
+      });
+  }
+
+  /**
+   * Load PPWR mapping table via new API
+   * Shows material ↔ declaration mapping status
+   */
+  async function loadPPWRMappingTable_v2() {
+    if (!sku) return;
+    
+    try {
+      const resp = await fetch(`/api/ppwr/mapping/${encodeURIComponent(sku)}`);
+      const data = await resp.json();
+      
+      if (!data.success) {
+        console.error('Failed to load mapping:', data.error);
+        return;
+      }
+      
+      // Update docMappingTableBody if it exists
+      const tbody = document.getElementById('docMappingTableBody');
+      if (!tbody) return;
+      
+      let html = '';
+      data.rows.forEach((row, idx) => {
+        const statusBadge = row.status === 'Mapped' 
+          ? '<span class="badge bg-success">Mapped</span>'
+          : '<span class="badge bg-warning text-dark">Unmapped</span>';
+        
+        html += `
+          <tr>
+            <td>${row.material_id}</td>
+            <td>${row.material_name}</td>
+            <td>${row.mapped_to}</td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      });
+      
+      tbody.innerHTML = html;
+      
+    } catch (error) {
+      console.error('Error loading PPWR mapping:', error);
+    }
+  }
+
+  /**
+   * Handle bulk actions via unified API endpoint
+   * @param {string} action - 'delete' | 'download' | 'evaluate'
+   */
+  async function handlePPWRBulkAction_v2(action) {
+    const selected = document.querySelectorAll('.ppwr-select-checkbox:checked');
+    if (selected.length === 0) {
+      mu_toast('No rows selected', 'PPWR', 'info', 2000);
+      return;
+    }
+    
+    const materialIds = Array.from(selected).map(cb => cb.dataset.material).filter(Boolean);
+    
+    if (action === 'delete') {
+      if (!confirm(`Delete ${materialIds.length} selected declaration(s)? Files will be archived.`)) return;
+    }
+    
+    try {
+      mu_toast(`Processing ${action} for ${materialIds.length} material(s)...`, 'PPWR', 'info', 2000);
+      
+      const resp = await fetch('/api/ppwr/bulk-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: action,
+          sku: sku,
+          material_ids: materialIds
+        })
+      });
+      
+      // Handle download action (returns file)
+      if (action === 'download') {
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `ppwr_declarations_${sku}_${Date.now()}.zip`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+          mu_toast('Download started', 'PPWR', 'success', 2500);
+        } else {
+          const errorData = await resp.json();
+          mu_toast(errorData.error || 'Download failed', 'PPWR', 'danger', 3000);
+        }
+        return;
+      }
+      
+      // Handle other actions (returns JSON)
+      const data = await resp.json();
+      
+      if (data.success) {
+        mu_toast(`${action} completed successfully`, 'PPWR', 'success', 2500);
+        
+        // Refresh tables after successful action
+        if (action === 'delete') {
+          await loadPPWRDeclarationsTable_v2();
+          await loadPPWRMappingTable_v2();
+        }
+        
+        if (action === 'evaluate') {
+          // Refresh evaluation results
+          await runPpwrEvaluateFlow();
+        }
+        
+        // Clear session selections
+        selectedMaterials.clear();
+        
+        // Uncheck all boxes
+        document.querySelectorAll('.ppwr-select-checkbox').forEach(cb => cb.checked = false);
+        const selectAll = document.getElementById('ppwr-select-all');
+        if (selectAll) {
+          selectAll.checked = false;
+          selectAll.indeterminate = false;
+        }
+        
+        // Update UI states
+        updateSelectAllCheckboxState();
+        updateBulkButtons();
+        updatePPWRActionBar();
+        
+      } else {
+        mu_toast(data.error || `${action} failed`, 'PPWR', 'danger', 3000);
+      }
+      
+    } catch (error) {
+      console.error(`Bulk ${action} error:`, error);
+      mu_toast(`Error during ${action}`, 'PPWR', 'danger', 3000);
+    }
+  }
+
+  /**
+   * Wire up bulk action buttons to new API
+   * Replaces old inline handlers
+   */
+  function initPPWRBulkActions_v2() {
+    // Override existing bulk delete handler
+    const deleteBtn = document.getElementById('ppwrBulkDelete');
+    if (deleteBtn) {
+      // Remove old listeners by cloning
+      const newDeleteBtn = deleteBtn.cloneNode(true);
+      deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+      newDeleteBtn.addEventListener('click', () => handlePPWRBulkAction_v2('delete'));
+    }
+    
+    // Override existing bulk download handler
+    const downloadBtn = document.getElementById('ppwrBulkDownload');
+    if (downloadBtn) {
+      const newDownloadBtn = downloadBtn.cloneNode(true);
+      downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+      newDownloadBtn.addEventListener('click', () => handlePPWRBulkAction_v2('download'));
+    }
+    
+    // Note: Evaluate button uses existing runPpwrEvaluateFlow() which is kept
+    // Could be enhanced to use bulk-action API in future if needed
+  }
+
+  /**
+   * Initialize PPWR tab with new API routes
+   * Call this when PPWR tab is activated
+   */
+  async function initPPWRTab_v2() {
+    if (!sku) return;
+    
+    // Load both tables
+    await Promise.all([
+      loadPPWRDeclarationsTable_v2(),
+      loadPPWRMappingTable_v2()
+    ]);
+    
+    // Wire up bulk actions
+    initPPWRBulkActions_v2();
+    
+    // Ensure checkbox listeners are attached (redundant but safe)
+    attachCheckboxListeners();
+  }
+
+  // Hook into tab activation to load data
+  document.querySelector('button[data-bs-target="#ppwrTabPane"]')?.addEventListener('shown.bs.tab', function() {
+    initPPWRTab_v2();
+  });
+
+  // Initialize immediately if PPWR tab is already active
+  if (document.querySelector('#ppwrTabPane')?.classList.contains('active')) {
+    setTimeout(() => initPPWRTab_v2(), 100);
+  }
+
+  // -------- END NEW PPWR BULK ACTIONS --------
+
+  // -------- PPWR multi-file upload helpers (inside DOMContentLoaded) --------
+
+  const MU_ALLOWED_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/msword' // .doc
+  ];
+  const MU_ALLOWED_EXTS = ['.pdf', '.xlsx', '.xls', '.docx', '.doc'];
+  const MU_MAX_BYTES = 10 * 1024 * 1024; // 10 MB per file
+
+  // Keep a single shared state object on window so all handlers see the same instance
+  let mu_state = window.mu_state || { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+  window.mu_state = mu_state;
+
+  function mu_now() { return new Date().toLocaleString(); }
+
+  // Lightweight modal controls for #multiUploadModal (Bootstrap CSS only)
+  function mu_open_modal() {
+    try {
+      const modal = document.getElementById('multiUploadModal');
+      if (!modal) return;
+      modal.classList.add('show');
+      modal.style.display = 'block';
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      if (!document.querySelector('.modal-backdrop')) {
+        const bd = document.createElement('div');
+        bd.className = 'modal-backdrop fade show';
+        document.body.appendChild(bd);
+      }
+    } catch (_) {}
+  }
+  function mu_close_modal() {
+    try {
+      const modal = document.getElementById('multiUploadModal');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      const bd = document.querySelector('.modal-backdrop');
+      if (bd) bd.remove();
+    } catch (_) {}
+  }
+  // Export helpers globally so other handlers can access them reliably
+  try {
+    window.mu_open_modal = mu_open_modal;
+    window.mu_close_modal = mu_close_modal;
+  } catch (_) {}
+  // Close actions (buttons with data-bs-dismiss, click-outside, and Escape key)
+  (function bindMuModalEvents(){
+    try {
+      document.querySelectorAll('#multiUploadModal [data-bs-dismiss="modal"]').forEach(el => {
+        el.addEventListener('click', mu_close_modal);
+      });
+      const m = document.getElementById('multiUploadModal');
+      if (m) {
+        m.addEventListener('click', (ev) => { if (ev.target === m) mu_close_modal(); });
+      }
+      document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          const modal = document.getElementById('multiUploadModal');
+          if (modal && modal.style.display === 'block') mu_close_modal();
+        }
+      });
+    } catch (_) {}
+  })();
+
+  function mu_toast(message, title = '', type = 'info', timeout = 4000) {
+    const container = document.getElementById('mu-toast-container');
+    if (!container) return;
+    const toastId = 'mu-toast-' + Date.now();
+    const el = document.createElement('div');
+    el.id = toastId;
+    el.className = `mb-2 shadow-sm`;
+    el.setAttribute('role', 'alert');
+    el.setAttribute('aria-live', 'assertive');
+    el.setAttribute('aria-atomic', 'true');
+    const bg = (type === 'success') ? '#198754' : (type === 'danger' ? '#dc3545' : (type === 'warning' ? '#ffc107' : '#0d6efd'));
+    const fg = (type === 'warning') ? '#111' : '#fff';
+    el.style.background = bg;
+    el.style.color = fg;
+    el.style.borderRadius = '6px';
+    el.style.padding = '10px 12px';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.gap = '8px';
+    const body = document.createElement('div');
+    body.className = 'toast-body';
+    body.innerHTML = `${title ? ('<strong class="me-2">'+title+'</strong>') : ''}${message}`;
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.textContent = '×';
+    closeBtn.style.background = 'transparent';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = fg;
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.lineHeight = '1';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.addEventListener('click', () => { try { el.remove(); } catch(_) {} });
+    el.appendChild(body);
+    el.appendChild(closeBtn);
+    container.appendChild(el);
+    setTimeout(() => { try { el.remove(); } catch(_) {} }, timeout);
+  }
+
+  function mu_render_list() {
+    const list = document.getElementById('mu-selected-list');
+    if (!list) return; // nothing to render if modal markup missing
+    list.innerHTML = '';
+    mu_state.files.forEach(item => {
+      const idx = item.id;
+      const safeName = item.file.name;
+      const progressPercent = item.progress || 0;
+      const row = document.createElement('div');
+      row.className = 'list-group-item mu-file-row';
+      row.dataset.id = idx;
+      row.innerHTML = `
+        <div class="mu-file-meta">
+          <div class="mu-file-name">${safeName}</div>
+          <div class="small text-muted">${(item.file.type || 'Unknown type')} • ${(item.file.size/1024/1024).toFixed(2)} MB</div>
+          <div class="mt-2 mu-progress"><div style="width:${progressPercent}%"></div></div>
+          <div class="small text-success mu-upload-result mt-1" style="display:${item.status === 'done' ? 'block' : 'none'}">${item.serverFilename ? item.serverFilename + ' • ' + (item.timestamp || '') : ''}</div>
+        </div>
+        <div class="mu-file-actions">
+          <button class="btn btn-sm btn-outline-primary mu-retry" ${item.status === 'failed' ? '' : 'style="display:none"'}>Retry</button>
+          <button class="btn btn-sm btn-outline-danger mu-cancel" ${item.status === 'uploading' ? '' : 'style="display:none"'}>Cancel</button>
+          <button class="btn btn-sm btn-outline-secondary mu-remove">Remove</button>
+        </div>`;
+      list.appendChild(row);
+      const retryBtn = row.querySelector('.mu-retry');
+      const cancelBtn = row.querySelector('.mu-cancel');
+      const removeBtn = row.querySelector('.mu-remove');
+      retryBtn && retryBtn.addEventListener('click', () => mu_retry(idx));
+      cancelBtn && cancelBtn.addEventListener('click', () => mu_cancel(idx));
+      removeBtn && removeBtn.addEventListener('click', () => mu_remove(idx));
+    });
+  }
+
+  function mu_add_files(fileList) {
+    if (!mu_state) { mu_state = window.mu_state = { rowIndex: null, rowMaterial: null, sku: null, files: [] }; }
+    for (const f of Array.from(fileList)) {
+      const lowerName = (f.name || '').toLowerCase();
+      const typeOk = !MU_ALLOWED_TYPES.length || MU_ALLOWED_TYPES.includes(f.type);
+      const extOk = MU_ALLOWED_EXTS.some(ext => lowerName.endsWith(ext));
+      if (!typeOk && !extOk) {
+        mu_toast(`${f.name} has unsupported type`, 'Upload', 'warning');
+        continue;
+      }
+      if (f.size > MU_MAX_BYTES) {
+        mu_toast(`${f.name} exceeds max size ${(MU_MAX_BYTES/1024/1024).toFixed(1)} MB`, 'Upload', 'warning');
+        continue;
+      }
+      const exists = mu_state.files.some(x => x.file.name === f.name && x.file.size === f.size);
+      if (exists) continue;
+      mu_state.files.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,8), file: f, status: 'pending', xhr: null, progress: 0, serverFilename: null, timestamp: null });
+    }
+    mu_render_list();
+    try {
+      const dbg = document.getElementById('mu-debug');
+      if (dbg) { dbg.style.display = 'block'; dbg.textContent = `Files queued: ${mu_state.files.length}`; }
+    } catch(_) {}
+  }
+
+  function mu_start_all() {
+    // If nothing queued, prompt for files and auto-start when selected
+    try {
+      // Ensure SKU present before uploads begin
+      if ((!mu_state || !mu_state.sku) && typeof window.SKU !== 'undefined' && window.SKU) {
+        window.mu_state = window.mu_state || { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+        window.mu_state.sku = window.SKU;
+      }
+      const directInput = document.getElementById('mu-file-input');
+      if (!mu_state.files.length) {
+        if (directInput && directInput.files && directInput.files.length) {
+          mu_add_files(directInput.files);
+        } else if (directInput) {
+          window._mu_autostart = true;
+          try { directInput.click(); } catch(_) {}
+          mu_toast('Choose files to upload', 'Upload', 'info', 1800);
+          return;
+        }
+      }
+    } catch(_) {}
+    const pending = mu_state.files.filter(f => f.status === 'pending' || f.status === 'failed');
+    if (!pending.length) { mu_toast('No files to upload', 'Upload', 'info'); return; }
+    pending.forEach(f => mu_upload_single(f.id));
+  }
+
+  async function mu_upload_single(id) {
+    const item = mu_state.files.find(x => x.id === id); if (!item) return; const file = item.file;
+    const fd = new FormData();
+    // supplier declarations API expects 'files' (can be multiple); we send one
+    fd.append('files', file);
+    // Always include a valid SKU; fall back to window.SKU if needed
+    fd.append('sku', (mu_state && mu_state.sku) || (typeof window.SKU !== 'undefined' ? window.SKU : '') || '');
+    fd.append('index', mu_state.rowIndex !== null ? mu_state.rowIndex : '');
+    // include material id: prefer mu_state.rowMaterial (from "Upload for selected"), fallback to row dataset
+    try {
+      const material = (mu_state && mu_state.rowMaterial) || (document.querySelector(`tr.data-row[data-index="${mu_state.rowIndex}"]`)?.dataset?.material || '');
+      fd.append('material', material || '');
+    } catch (e) { fd.append('material', ''); }
+    // Note: do NOT include apply_to_duplicates in the upload call.
+    // We map duplicates explicitly after a successful upload to avoid double-creation.
+    const xhr = new XMLHttpRequest(); item.xhr = xhr; item.status = 'uploading'; mu_render_list();
+    xhr.open('POST', '/api/supplier-declarations/upload', true);
+    xhr.upload.onprogress = function(e) { if (e.lengthComputable) { const percent = Math.round((e.loaded / e.total) * 100); item.progress = percent; mu_render_list(); } };
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        try {
+          const resp = JSON.parse(xhr.responseText || '{}');
+              if (xhr.status >= 200 && xhr.status < 300 && resp && (resp.success || (resp.uploaded && resp.uploaded.length))) {
+            // multi-file API shape
+            const uploadedArr = Array.isArray(resp.uploaded) ? resp.uploaded : [];
+            const first = uploadedArr[0] || {};
+            const uploadDate = first.upload_date || resp.upload_time || null;
+            const displayTs = uploadDate ? new Date(uploadDate).toLocaleString() : mu_now();
+            const serverName = first.original_filename || resp.filename || file.name;
+            item.status = 'done';
+            item.progress = 100;
+            item.serverFilename = serverName;
+            item.timestamp = displayTs;
+            mu_toast(`${serverName} uploaded`, 'Upload', 'success', 2500);
+            mu_update_row_upload_time(mu_state.rowIndex, item.serverFilename, item.timestamp);
+            // Close the modal promptly on single-file success; multi-file will still be handled by mu_maybe_close_modal
+            try { mu_close_modal(); } catch(_) {}
+
+            // Persist mapping to backend: always create single link; fan-out to duplicates if selected
+            try {
+              const declId = first.id || resp.id || (Array.isArray(resp.uploaded) && resp.uploaded[0] && resp.uploaded[0].id);
+              const materialToMap = (mu_state && mu_state.rowMaterial) || ((first && first.material) ? first.material : (document.querySelector(`tr.data-row[data-index="${mu_state.rowIndex}"]`)?.dataset?.material || ''));
+              if (declId && materialToMap) {
+                const applyCheckbox = document.getElementById('mu-apply-duplicates');
+                const applyToDuplicates = !!(applyCheckbox && applyCheckbox.checked);
+                const scope = applyToDuplicates ? 'all' : 'sku';
+                fetch('/api/ppwr/supplier-declarations/map', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                  body: `decl_id=${encodeURIComponent(declId)}&material_id=${encodeURIComponent(materialToMap)}&apply_to_duplicates=${encodeURIComponent(applyToDuplicates)}&scope=${encodeURIComponent(scope)}`
+                })
+                .then(r => r.json().then(j => ({ ok: r.ok, data: j })).catch(() => ({ ok: r.ok, data: {} })))
+                .then(({ ok, data }) => {
+                  if (ok && data && data.success) {
+                    const links = data.links_created || data.frontend_links_created || (data.backend_response && data.backend_response.links_created) || (applyToDuplicates ? 'multiple' : 1);
+                    mu_toast(applyToDuplicates ? `Declaration mapped to ${links} BOM row(s)` : 'Declaration mapped to row', 'Map', 'success', 2000);
+                  } else {
+                    console.warn('Mapping response not successful:', data);
+                    mu_toast('Mapping did not confirm success', 'Map', 'warning', 2500);
+                  }
+                })
+                .catch(err => console.warn('Mapping call failed', err));
+              }
+            } catch (e) { console.warn('Post-upload mapping skipped', e); }
+            // refresh declarations index and re-render all rows so duplicates become locked/mapped
+            fetchDeclarationsIndex()
+              .then(() => { try { applyDeclarationsToRows(materialToMap); updatePPWRActionBar(); } catch (e) { console.warn('applyDeclarationsToRows failed', e); } })
+              .catch(e => { console.warn('Failed to refresh declarations after upload', e); try { applyDeclarationsToRows(materialToMap); } catch(_) {} });
+          } else {
+            item.status = 'failed';
+            try {
+              const msg = (resp && resp.error)
+                || (Array.isArray(resp && resp.errors) && resp.errors.length ? `${resp.errors[0].filename || file.name}: ${resp.errors[0].error}` : null)
+                || `${file.name} upload failed`;
+              mu_toast(msg, 'Upload', 'danger', 5000);
+            } catch (_) {
+              mu_toast(`${file.name} upload failed`, 'Upload', 'danger', 5000);
+            }
+            console.error('Upload failed response', xhr.status, resp);
+          }
+        } catch (err) { item.status = 'failed'; mu_toast(`${file.name} upload failed (invalid response)`, 'Upload', 'danger', 4000); console.error('Upload parse error', err, xhr.responseText); }
+        finally {
+          item.xhr = null;
+          mu_render_list();
+          mu_maybe_close_modal();
+        }
+      }
+    };
+    xhr.onerror = function() { item.status = 'failed'; item.xhr = null; mu_render_list(); mu_toast(`${file.name} upload error`, 'Upload', 'danger', 4000); mu_maybe_close_modal(); };
+    xhr.send(fd);
+  }
+
+  function mu_retry(id) { const item = mu_state.files.find(x => x.id === id); if (!item) return; item.status = 'pending'; item.progress = 0; mu_render_list(); mu_upload_single(id); }
+  function mu_cancel(id) { const item = mu_state.files.find(x => x.id === id); if (!item) return; if (item.xhr) { item.xhr.abort(); item.status = 'cancelled'; item.xhr = null; mu_render_list(); mu_toast(`${item.file.name} cancelled`, 'Upload', 'warning', 2000); } else { item.status = 'cancelled'; mu_render_list(); } }
+  function mu_remove(id) { const idx = mu_state.files.findIndex(x => x.id === id); if (idx === -1) return; const item = mu_state.files[idx]; if (item.status === 'uploading') { mu_toast('Cannot remove while uploading. Cancel first.', 'Upload', 'warning'); return; } mu_state.files.splice(idx, 1); mu_render_list(); }
+
+  function mu_rename(id) {
+    const item = mu_state.files.find(x => x.id === id); if (!item) return;
+    const oldName = item.file && item.file.name ? item.file.name : '';
+    const lastDot = oldName.lastIndexOf('.');
+    const ext = lastDot > 0 ? oldName.slice(lastDot) : '';
+    let proposed = prompt('Rename file', oldName);
+    if (!proposed) return;
+    proposed = proposed.trim();
+    if (!proposed) return;
+    if (ext && !proposed.toLowerCase().endsWith(ext.toLowerCase())) {
+      proposed += ext; // ensure extension preserved
+    }
+    try {
+      const newFile = new File([item.file], proposed, { type: item.file.type, lastModified: item.file.lastModified });
+      item.file = newFile;
+      mu_toast(`Renamed to ${proposed}`, 'Rename', 'info', 2200);
+      mu_render_list();
+    } catch (e) {
+      console.warn('Rename not supported', e);
+      mu_toast('Rename not supported in this browser', 'Rename', 'warning', 3000);
+    }
+  }
+
+  function mu_update_row_upload_time(rowIndex, filename, timestamp) {
+    try {
+      const elem = document.querySelector(`.upload-time[data-index="${rowIndex}"]`);
+      if (!elem) return;
+      // prepend newest entry and keep only the two most recent
+      const entry = document.createElement('div');
+      entry.className = 'small text-muted';
+      entry.textContent = `${filename} • ${timestamp}`;
+      // insert at top
+      if (elem.firstChild) elem.insertBefore(entry, elem.firstChild);
+      else elem.appendChild(entry);
+      // remove any extras beyond 2
+      while (elem.children.length > 2) elem.removeChild(elem.lastChild);
+    } catch (e) { console.error('mu_update_row_upload_time error', e); }
+  }
+
+  // Close modal automatically when all uploads are finished or failed/cancelled
+  function mu_maybe_close_modal() {
+    try {
+      const stillWorking = mu_state.files.some(f => f.status === 'uploading' || f.status === 'pending');
+      const anyDone = mu_state.files.some(f => f.status === 'done');
+      if (!stillWorking && mu_state.files.length) {
+        mu_close_modal();
+        if (anyDone) mu_toast('Uploads finished', 'Upload', 'success', 1800);
+        mu_state.files = [];
+        const input = document.getElementById('mu-file-input');
+        if (input) input.value = '';
+      }
+    } catch (_) {}
+  }
+
+  // Per-row selection/checkbox UI removed. Uploads are initiated per-row and the modal
+  // includes an "Apply to duplicates" checkbox which controls whether the uploaded
+  // declaration is mapped to duplicate BOM rows.
+
+  // Trigger backend assessment via frontend API and render inline result under the row
+  async function evaluateDeclForRow(index, declId, materialId) {
+    try {
+      const resp = await fetch('/api/ppwr/assess-from-declaration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `decl_id=${encodeURIComponent(declId)}&material_id=${encodeURIComponent(materialId || '')}`
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data || !data.success) {
+        mu_toast((data && data.error) ? data.error : 'Assessment failed', 'PPWR', 'danger', 3500);
+        return;
+      }
+      const a = data.assessment || null;
+      // Ensure detail row is open
+      toggleDetails(index);
+      const detailRow = document.getElementById(`detail-${index}`);
+      if (!detailRow) return;
+      // Create or update inline result container
+      let box = detailRow.querySelector('.ppwr-inline-result');
+      if (!box) {
+        const td = detailRow.querySelector('td');
+        box = document.createElement('div');
+        box.className = 'alert alert-info ppwr-inline-result mt-2';
+        td.appendChild(box);
+      }
+      if (a) {
+        box.innerHTML = `
+          <div class="fw-bold mb-1">Extracted Assessment</div>
+          <div><strong>PPWR Compliant:</strong> ${a.ppwr_compliant}</div>
+          <div><strong>Supplier:</strong> ${a.supplier_name || '-'}</div>
+          <div><strong>Declaration Date:</strong> ${a.declaration_date || '-'}</div>
+          <div><strong>Recyclability:</strong> ${a.packaging_recyclability || '-'}</div>
+          <div><strong>Recycled Content %:</strong> ${a.recycled_content_percent || '-'}</div>
+          <div><strong>Restricted Substances:</strong> ${(a.restricted_substances || '[]')}</div>
+          <div><strong>Notes:</strong> ${a.notes || '-'}</div>
+        `;
+      } else {
+        box.innerHTML = `<div class="fw-bold mb-1">Extracted Assessment</div><div>No assessment generated.</div>`;
+      }
+      mu_toast('PPWR assessment updated', 'PPWR', 'success', 2500);
+    } catch (err) {
+      console.error('evaluateDeclForRow error', err);
+      mu_toast('Assessment error', 'PPWR', 'danger', 3500);
+    }
+  }
+
+  function openMultiUpload(index) {
+    mu_state.rowIndex = index; mu_state.files = [];
+    mu_state.sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+    try {
+      const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
+      const material = (rowEl && (rowEl.dataset ? rowEl.dataset.material : rowEl.getAttribute('data-material'))) || '';
+      mu_state.rowMaterial = material || mu_state.rowMaterial || '';
+      const label = document.getElementById('mu-row-label'); if (label) label.textContent = (material || index || '');
+    } catch (_) {
+      const label = document.getElementById('mu-row-label'); if (label) label.textContent = index;
+    }
+    const fileInput = document.getElementById('mu-file-input'); if (fileInput) fileInput.value = '';
+    mu_render_list();
+    // Prefer showing the modal UI for multi-file upload
+    if (typeof mu_open_modal === 'function') { mu_open_modal(); return; }
+    // Fallback to native file picker if modal is unavailable
+    const global = document.getElementById('globalUploadInput');
+    if (global) {
+      global.dataset.index = index;
+      try { global.click(); } catch (e) { console.error('Global input click failed', e); }
+      return;
+    }
+    // Ultimate fallback: temporary input
+    try {
+      const tmp = document.createElement('input');
+      tmp.type = 'file';
+      tmp.accept = '.pdf,.xlsx,.xls,.docx,.doc';
+      tmp.multiple = true;
+      tmp.style.display = 'none';
+      document.body.appendChild(tmp);
+      tmp.addEventListener('change', () => {
+        if (!tmp.files || !tmp.files.length) { document.body.removeChild(tmp); return; }
+        if (typeof mu_add_files === 'function' && typeof mu_start_all === 'function') {
+          try { mu_add_files(tmp.files); mu_start_all(); } catch (e) { console.warn('mu_* fallback failed, using direct upload', e); }
+        } else {
+          const sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+          const rowEl = document.querySelector(`tr.data-row[data-index='${index}']`);
+          const material = (mu_state && mu_state.rowMaterial) || (rowEl ? (rowEl.getAttribute('data-material') || '') : '');
+          Array.from(tmp.files).forEach(f => {
+            const fd = new FormData();
+            fd.append('files', f);
+            fd.append('sku', sku);
+            fd.append('index', index);
+            fd.append('material', material);
+            fetch('/api/supplier-declarations/upload', { method: 'POST', body: fd })
+              .then(r => r.json().then(j => ({ ok: r.ok, data: j })).catch(() => ({ ok: r.ok, data: {} })))
+              .then(({ ok, data }) => {
+                if (ok) {
+                  try { mu_toast(`${f.name} uploaded`, 'Upload', 'success', 2500); } catch(_) { alert('Uploaded: ' + f.name); }
+                  try { fetchDeclarationsIndex().then(() => applyDeclarationsToRows()); } catch(_) {}
+                } else {
+                  try { mu_toast(`${f.name} upload failed`, 'Upload', 'danger', 3000); } catch(_) { alert('Upload failed: ' + f.name); }
+                }
+              })
+              .catch(err => { try { mu_toast('Upload error', 'Upload', 'danger', 3000); } catch(_) { alert('Upload error: ' + err); } });
+          });
+        }
+        document.body.removeChild(tmp);
+      });
+      tmp.click();
+      try { const dbg = document.getElementById('mu-debug'); if (dbg) { dbg.style.display = 'block'; dbg.textContent = 'Fallback file picker opened'; } } catch(e) {}
+      return;
+    } catch (e) {
+      try { const dbg = document.getElementById('mu-debug'); if (dbg) { dbg.style.display = 'block'; dbg.textContent = 'No upload modal or file picker available'; } } catch(_) {}
+    }
+  }
+
+  // Expose upload opener globally for Console/tests and external handlers
+  try {
+    window.openMultiUpload = openMultiUpload;
+    window.muOpenUpload = openMultiUpload;
+  } catch (e) { /* ignore */ }
+
+  const muFileInput = document.getElementById('mu-file-input'); if (muFileInput) { muFileInput.addEventListener('change', function(e) { mu_add_files(this.files); if (window._mu_autostart) { window._mu_autostart = false; try { mu_start_all(); } catch(_) {} } }); }
+  const muStartAllBtn = document.getElementById('mu-start-all'); if (muStartAllBtn) muStartAllBtn.addEventListener('click', mu_start_all);
+  // Export key mu_* functions to window for early wrappers
+  try {
+    window.mu_add_files = mu_add_files;
+    window.mu_start_all = mu_start_all;
+    window.mu_upload_single = mu_upload_single;
+    window.mu_toast = mu_toast;
+  } catch (_) { /* ignore */ }
+  const dropZone = document.getElementById('mu-drop-zone');
+  if (dropZone) {
+    dropZone.addEventListener('click', function(){ if (muFileInput) muFileInput.click(); });
+    ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); dropZone.classList.add('mu-drop-hover'); }));
+    ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('mu-drop-hover'); }));
+    dropZone.addEventListener('drop', function(e){
+      const files = e.dataTransfer && e.dataTransfer.files; if (files && files.length) { mu_add_files(files); }
+      try { const dbg = document.getElementById('mu-debug'); if (dbg) { dbg.style.display = 'block'; dbg.textContent = `Dropped ${files ? files.length : 0} file(s)`; } } catch(_) {}
+    });
+  }
+  // Direct navigation to supplier declarations handled via goToSupplierDeclarations
+  // Resilient fallback: delegated tab activation if earlier tab wiring failed
+  try {
+    const navTabs = document.querySelector('.nav-tabs');
+    if (navTabs && !navTabs._ppwr_tab_fallback_installed) {
+      navTabs.addEventListener('click', function(ev) {
+        try {
+          const btn = ev.target.closest && ev.target.closest('button[data-bs-target]');
+          if (!btn) return;
+          const sel = btn.getAttribute('data-bs-target');
+          if (!sel) return;
+          // Update nav buttons
+          document.querySelectorAll('.nav-tabs button[data-bs-target]').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+          btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+          // Show pane
+          document.querySelectorAll('.tab-pane').forEach(p => { p.classList.remove('show','active'); });
+          const pane = document.querySelector(sel);
+          if (pane) pane.classList.add('show','active');
+          // Persist tab in URL
+          try { const url = new URL(window.location); url.searchParams.set('tab', (sel||'').replace('#','')); window.history.replaceState({}, '', url); } catch (_) {}
+          // Update document title
+          try { const label = (btn.textContent||'').trim(); if (label) document.title = `${label} - ${productName || sku}`; } catch(_) {}
+        } catch(_) {}
+      });
+      navTabs._ppwr_tab_fallback_installed = true;
+    }
+  } catch(_) {}
+
+});
+</script>
+
+<!-- Load Chart.js with fallbacks to avoid broken CDN responses causing SyntaxErrors -->
+<script>
+  (function(){
+    const urls = [
+      'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+      'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+    ];
+    async function tryLoad() {
+      for (const u of urls) {
+        try {
+          const resp = await fetch(u, {cache: 'no-store', mode: 'cors'});
+          if (!resp.ok) { console.debug('Chart.js fetch failed', u, resp.status); continue; }
+          const ct = resp.headers.get('content-type') || '';
+          const text = await resp.text();
+          // If response looks like HTML (starts with '<'), skip it
+          if (text.trim().startsWith('<')) { console.debug('Chart.js response looks like HTML, skipping', u); continue; }
+          // Insert script text into page
+          const s = document.createElement('script');
+          s.type = 'text/javascript';
+          s.text = text;
+          document.head.appendChild(s);
+          console.debug('Chart.js loaded from', u);
+          return;
+        } catch (e) {
+          console.debug('Chart.js load error', u, e);
+          continue;
+        }
+      }
+      console.warn('Chart.js could not be loaded from CDNs; continuing without charts.');
+    }
+    tryLoad();
+  })();
+</script>
+<script>
+  // Ensure initial PFAS and PPWR data load and optionally activate PPWR tab.
+  (function(){
+    try {
+      const sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+      const urlParams = new URLSearchParams(window.location.search);
+      const region = urlParams.get('region') || 'all';
+      if (typeof filterAssessmentDataPFAS === 'function') {
+        try { filterAssessmentDataPFAS(sku, region); } catch(e) { console.debug('PFAS init error', e); }
+      }
+      if (typeof filterAssessmentDataPPWR === 'function') {
+        try { filterAssessmentDataPPWR(sku, 'all'); } catch(e) { console.debug('PPWR init error', e); }
+      }
+
+      // Honor explicit request to show the PPWR tab
+      if (urlParams.get('tab') === 'ppwr' || window.location.pathname.indexOf('/ppwr-assessment/') !== -1) {
+        const ppwrBtn = document.querySelector('button[data-bs-target="#ppwrTab"]');
+        if (ppwrBtn && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+          try { new bootstrap.Tab(ppwrBtn).show(); } catch(e) { console.debug('Show PPWR tab failed', e); }
+        }
+      }
+    } catch (err) {
+      console.debug('Initial assessment bootstrap error', err);
+    }
+  })();
+    // Fallback: directly bind upload buttons in case delegated handler fails
+    try {
+      document.querySelectorAll('button[data-action="upload"]').forEach(b => {
+        // avoid double-binding
+        if (b.__mu_direct_bound) return;
+        b.__mu_direct_bound = true;
+        b.addEventListener('click', function(ev) {
+          try {
+            const idx = b.dataset.index;
+            const rowEl = document.querySelector(`tr.data-row[data-index="${idx}"]`);
+            const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+            if (typeof mu_state === 'undefined') window.mu_state = { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+            mu_state.rowIndex = idx;
+            mu_state.rowMaterial = material;
+            mu_state.sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+            mu_state.files = [];
+            if (typeof mu_render_list === 'function') mu_render_list();
+            if (typeof openMultiUpload === 'function') {
+              openMultiUpload(idx);
+            } else {
+              console.debug('openMultiUpload not defined');
+            }
+          } catch (e) { console.warn('Direct upload click fallback failed', e); }
+        });
+      });
+    } catch (e) { console.debug('Direct upload binding init failed', e); }
+    // Also attach a localized listener on the PPWR table body to catch dynamically-rendered buttons
+    try {
+      const ppwrTable = document.getElementById('ppwrTableBody');
+      if (ppwrTable) {
+        ppwrTable.addEventListener('click', function(e) {
+          const btn = e.target.closest && e.target.closest('button[data-action="upload"]');
+          if (!btn) return;
+          e.preventDefault();
+          try {
+            const idx = btn.dataset.index;
+            const rowEl = document.querySelector(`tr.data-row[data-index="${idx}"]`);
+            const material = rowEl ? (rowEl.getAttribute('data-material') || '') : '';
+            if (typeof mu_state === 'undefined') window.mu_state = { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+            mu_state.rowIndex = idx;
+            mu_state.rowMaterial = material;
+            mu_state.files = [];
+            mu_state.sku = (typeof window.SKU !== 'undefined' && window.SKU) ? window.SKU : (document.body && document.body.dataset ? document.body.dataset.sku : '');
+            if (typeof mu_render_list === 'function') mu_render_list();
+            if (typeof openMultiUpload === 'function') {
+              openMultiUpload(idx);
+            } else {
+              console.debug('openMultiUpload not defined');
+            }
+          } catch (err) { console.warn('ppwr table upload handler failed', err); }
+        });
+      }
+    } catch (e) { console.debug('ppwr table binding init failed', e); }
+</script>
+</body>
+</html>

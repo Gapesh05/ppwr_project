@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PPWR: Map Declarations</title>
+  <link rel="stylesheet" href="/static/templates/style.css" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f4f4f4; }
+    .actions { display: flex; gap: 8px; }
+    .result { margin-top: 16px; padding: 12px; border: 1px solid #ddd; background: #fafafa; }
+  </style>
+</head>
+<body>
+  <h2>PPWR: Map Declarations to Material IDs</h2>
+  <p>Pick a declaration and provide the `material_id` token to run the PPWR assessment.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Original Filename</th>
+        <th>Inferred Material</th>
+        <th>Upload Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in declarations %}
+      <tr>
+        <td>{{ d.id }}</td>
+        <td>{{ d.original_filename }}</td>
+        <td>{{ d.material_id or '' }}</td>
+        <td>{{ d.upload_date }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('ppwr_map_declarations_run') }}" class="actions">
+            <input type="hidden" name="decl_id" value="{{ d.id }}" />
+            <input type="text" name="material_id" placeholder="material_id" value="{{ d.material_id or '' }}" />
+            <label style="margin-left:8px"><input type="checkbox" name="apply_to_duplicates" value="true" /> Apply to duplicates</label>
+            <select name="scope">
+              <option value="sku">SKU</option>
+              <option value="global">Global</option>
+            </select>
+            <button type="submit">Evaluate</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if result %}
+    <div class="result">
+      <h3>Assessment Result</h3>
+      {% if result.success and result.assessment %}
+        <pre>{{ result.assessment | tojson(indent=2) }}</pre>
+      {% elif result.success %}
+        <div>No assessment generated.</div>
+        <pre>{{ result.pipeline_result | tojson(indent=2) }}</pre>
+        {% if result.decl_id and result.material_id %}
+          <div>Mapped declaration {{ result.decl_id }} to material {{ result.material_id }}.</div>
+          {% if result.links_created is defined %}
+            <div>Links created: {{ result.links_created }}</div>
+          {% endif %}
+        {% endif %}
+      {% else %}
+        <div>Assessment failed.</div>
+        <pre>{{ result | tojson(indent=2) }}</pre>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</body>
+</html>
