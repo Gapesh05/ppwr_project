@@ -46,13 +46,3 @@ def main():
 
 if __name__ == '__main__':
     raise SystemExit(main())
-import sys
-from pathlib import Path
-
-
-def main():
-    print("Migrations disabled: using SQLite with SQLAlchemy create_all().")
-    return 0
-
-if __name__ == '__main__':
-    raise SystemExit(main())

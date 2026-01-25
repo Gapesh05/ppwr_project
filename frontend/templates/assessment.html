@@ -3152,13 +3152,114 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   /**
+   * Validate supplier declaration filename format
+   * Expected format: MaterialID_MaterialName.extension
+   * @param {File} file - The file to validate
+   * @param {string} expectedMaterialId - Expected material ID from BOM
+   * @param {string} expectedMaterialName - Expected material name from BOM
+   * @returns {Object} validation result with {valid: boolean, message: string}
+   */
+  function validatePPWRFilename(file, expectedMaterialId, expectedMaterialName) {
+    const filename = file.name;
+    const baseName = filename.replace(/\.(pdf|txt|csv|xlsx?|docx?)$/i, ''); // Remove extension
+    
+    // Normalize expected values (trim, lowercase for comparison)
+    const normalizedMaterialId = (expectedMaterialId || '').trim().toLowerCase();
+    const normalizedMaterialName = (expectedMaterialName || '').trim().toLowerCase();
+    
+    // Parse filename (expect format: MaterialID_MaterialName)
+    const parts = baseName.split('_');
+    if (parts.length < 2) {
+      return {
+        valid: false,
+        reason: 'invalid_format',
+        message: `Upload Unsuccessful<br><br>Filename must follow format:<br><strong>${expectedMaterialId}_${expectedMaterialName}.pdf</strong>`
+      };
+    }
+    
+    const fileMatId = parts[0].trim().toLowerCase();
+    const fileMatName = parts.slice(1).join('_').trim().toLowerCase(); // Handle names with underscores
+    
+    // Check material ID match
+    if (fileMatId !== normalizedMaterialId) {
+      return {
+        valid: false,
+        reason: 'material_id_mismatch',
+        message: `Upload Unsuccessful<br><br>Material ID mismatch<br>Expected: <strong>${expectedMaterialId}</strong><br>Got: <strong>${parts[0]}</strong><br><br>Please rename file to:<br><strong>${expectedMaterialId}_${expectedMaterialName}.pdf</strong>`
+      };
+    }
+    
+    // Check material name match (allow partial match for long names)
+    if (!fileMatName.includes(normalizedMaterialName) && !normalizedMaterialName.includes(fileMatName)) {
+      return {
+        valid: false,
+        reason: 'material_name_mismatch',
+        message: `Upload Unsuccessful<br><br>Material Name mismatch<br>Expected: <strong>${expectedMaterialName}</strong><br>Got: <strong>${parts.slice(1).join('_')}</strong><br><br>Please rename file to:<br><strong>${expectedMaterialId}_${expectedMaterialName}.pdf</strong>`
+      };
+    }
+    
+    return { valid: true };
+  }
+
+  /**
+   * Show centered toast notification
+   * @param {string} message - Message to display
+   * @param {string} type - 'error' | 'warning' | 'info' | 'success'
+   */
+  function showCenteredToast(message, type = 'error') {
+    let toastContainer = document.getElementById('centerToastContainer');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'centerToastContainer';
+      toastContainer.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+      `;
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    const bgColor = type === 'error' ? 'bg-danger' : (type === 'warning' ? 'bg-warning' : (type === 'success' ? 'bg-success' : 'bg-info'));
+    const textColor = type === 'warning' ? 'text-dark' : 'text-white';
+    
+    const toastHtml = `
+      <div id="${toastId}" class="toast align-items-center ${bgColor} ${textColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            <strong>${message}</strong>
+          </div>
+          <button type="button" class="btn-close ${textColor === 'text-white' ? 'btn-close-white' : ''} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    `;
+    
+    toastContainer.innerHTML = toastHtml;
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+      autohide: true,
+      delay: 5000
+    });
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', function() {
+      toastElement.remove();
+    });
+  }
+
+  /**
    * Handle bulk actions via unified API endpoint
    * @param {string} action - 'delete' | 'download' | 'evaluate'
    */
   async function handlePPWRBulkAction_v2(action) {
     const selected = document.querySelectorAll('.ppwr-select-checkbox:checked');
     if (selected.length === 0) {
-      mu_toast('No rows selected', 'PPWR', 'info', 2000);
+      showCenteredToast('Please select at least one material', 'warning');
       return;
     }
     
@@ -3166,6 +3267,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (action === 'delete') {
       if (!confirm(`Delete ${materialIds.length} selected declaration(s)? Files will be archived.`)) return;
+    }
+    
+    // Show loading indicator for evaluate action
+    if (action === 'evaluate') {
+      const evaluateBtn = document.querySelector('[onclick*="evaluate"]');
+      if (evaluateBtn) {
+        evaluateBtn.disabled = true;
+        evaluateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Evaluating...';
+      }
     }
     
     try {
@@ -3469,29 +3579,50 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(_) {}
   }
 
+  // Track concurrent uploads to prevent race conditions from double-clicks
+  let uploadInProgress = {};
+
   function mu_start_all() {
-    // If nothing queued, prompt for files and auto-start when selected
+    // Prevent concurrent uploads for the same material
+    const materialId = mu_state?.rowMaterial;
+    if (materialId && uploadInProgress[materialId]) {
+      mu_toast('⚠️ Upload already in progress for this material', 'Upload', 'warning', 2500);
+      return;
+    }
+    
+    if (materialId) {
+      uploadInProgress[materialId] = true;
+    }
+
     try {
-      // Ensure SKU present before uploads begin
-      if ((!mu_state || !mu_state.sku) && typeof window.SKU !== 'undefined' && window.SKU) {
-        window.mu_state = window.mu_state || { rowIndex: null, rowMaterial: null, sku: null, files: [] };
-        window.mu_state.sku = window.SKU;
-      }
-      const directInput = document.getElementById('mu-file-input');
-      if (!mu_state.files.length) {
-        if (directInput && directInput.files && directInput.files.length) {
-          mu_add_files(directInput.files);
-        } else if (directInput) {
-          window._mu_autostart = true;
-          try { directInput.click(); } catch(_) {}
-          mu_toast('Choose files to upload', 'Upload', 'info', 1800);
-          return;
+      // If nothing queued, prompt for files and auto-start when selected
+      try {
+        // Ensure SKU present before uploads begin
+        if ((!mu_state || !mu_state.sku) && typeof window.SKU !== 'undefined' && window.SKU) {
+          window.mu_state = window.mu_state || { rowIndex: null, rowMaterial: null, sku: null, files: [] };
+          window.mu_state.sku = window.SKU;
         }
+        const directInput = document.getElementById('mu-file-input');
+        if (!mu_state.files.length) {
+          if (directInput && directInput.files && directInput.files.length) {
+            mu_add_files(directInput.files);
+          } else if (directInput) {
+            window._mu_autostart = true;
+            try { directInput.click(); } catch(_) {}
+            mu_toast('Choose files to upload', 'Upload', 'info', 1800);
+            return;
+          }
+        }
+      } catch(_) {}
+      const pending = mu_state.files.filter(f => f.status === 'pending' || f.status === 'failed');
+      if (!pending.length) { mu_toast('No files to upload', 'Upload', 'info'); return; }
+      pending.forEach(f => mu_upload_single(f.id));
+    } finally {
+      // Clear the lock when upload batch completes or errors
+      if (materialId) {
+        setTimeout(() => { uploadInProgress[materialId] = false; }, 1000);
       }
-    } catch(_) {}
-    const pending = mu_state.files.filter(f => f.status === 'pending' || f.status === 'failed');
-    if (!pending.length) { mu_toast('No files to upload', 'Upload', 'info'); return; }
-    pending.forEach(f => mu_upload_single(f.id));
+    }
   }
 
   async function mu_upload_single(id) {
@@ -3702,13 +3833,86 @@ document.addEventListener('DOMContentLoaded', function() {
       const rowEl = document.querySelector(`tr.data-row[data-index="${index}"]`);
       const material = (rowEl && (rowEl.dataset ? rowEl.dataset.material : rowEl.getAttribute('data-material'))) || '';
       mu_state.rowMaterial = material || mu_state.rowMaterial || '';
+      
+      // Get material name from table for validation
+      let materialName = '';
+      try {
+        const tbody = rowEl ? rowEl.closest('tbody') : null;
+        if (tbody && tbody.id === 'ppwrTableBody') {
+          const materialCell = rowEl.querySelector('td:nth-child(2) .small.text-muted');
+          materialName = materialCell ? materialCell.textContent.trim() : '';
+        }
+      } catch(e) { console.debug('Material name extraction failed', e); }
+      
       const label = document.getElementById('mu-row-label'); if (label) label.textContent = (material || index || '');
     } catch (_) {
       const label = document.getElementById('mu-row-label'); if (label) label.textContent = index;
     }
     const fileInput = document.getElementById('mu-file-input'); if (fileInput) fileInput.value = '';
     mu_render_list();
-    // Prefer showing the modal UI for multi-file upload
+    
+    // ✅ NEW: Create validated upload flow - directly open file picker with validation
+    const validatedFileInput = document.createElement('input');
+    validatedFileInput.type = 'file';
+    validatedFileInput.accept = '.pdf,.txt,.csv,.xlsx,.xls,.doc,.docx';
+    validatedFileInput.style.display = 'none';
+    
+    validatedFileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        // ✅ VALIDATE FILENAME BEFORE UPLOAD
+        const validation = validatePPWRFilename(file, mu_state.rowMaterial, materialName);
+        if (!validation.valid) {
+          showCenteredToast(validation.message, 'error');
+          return; // Stop upload
+        }
+        
+        // Filename valid - proceed with upload
+        const formData = new FormData();
+        formData.append('files', file);
+        formData.append('sku', mu_state.sku);
+        formData.append('material', mu_state.rowMaterial);
+        
+        const response = await fetch('/api/supplier-declarations/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.total_uploaded > 0) {
+          showCenteredToast(`✅ Successfully uploaded:<br>${file.name}`, 'success');
+          
+          // Reload declarations table
+          setTimeout(() => {
+            if (typeof fetchDeclarationsIndex === 'function' && typeof applyDeclarationsToRows === 'function') {
+              fetchDeclarationsIndex().then(() => {
+                applyDeclarationsToRows(mu_state.rowMaterial);
+                if (typeof updatePPWRActionBar === 'function') updatePPWRActionBar();
+              }).catch(() => {});
+            } else {
+              location.reload();
+            }
+          }, 1500);
+        } else {
+          const errorMsg = result.errors?.[0]?.error || result.error || 'Upload failed';
+          showCenteredToast(`❌ Upload failed:<br>${errorMsg}`, 'error');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        showCenteredToast('❌ Network error during upload<br>Please try again.', 'error');
+      } finally {
+        try { document.body.removeChild(validatedFileInput); } catch(_) {}
+      }
+    };
+    
+    document.body.appendChild(validatedFileInput);
+    validatedFileInput.click();
+    return; // Skip legacy modal flow
+    
+    // Legacy modal fallback (not reached with validation flow)
     if (typeof mu_open_modal === 'function') { mu_open_modal(); return; }
     // Fallback to native file picker if modal is unavailable
     const global = document.getElementById('globalUploadInput');

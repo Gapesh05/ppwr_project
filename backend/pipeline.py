@@ -7,7 +7,7 @@ from backend.models import AzureEmbedder, AzureLLM
 from backend.retriever import connect_chromadb, get_collection, retrieve_documents, extract_components, raw_prompt_template, extract_text_from_pdf_bytes
 from backend.parse_llm import parse_llm_response, parse_ppwr_output
 from backend.queries import ppwr_queries
-from backend.models import SessionLocal, PPWRAssessment
+from backend.models import SessionLocal
 import json
 # -------------------------
 # CONFIGURATION HELPER FUNCTIONS
@@ -212,8 +212,7 @@ Example format:
             where_document=""
         )
 
-        print("\n=== AI RESPONSE ===")
-        print(response)
+        logging.info(f"AI RESPONSE: {response}")
 
     except Exception as e:
         logging.error(f"Pipeline failed: {e}")
@@ -225,12 +224,14 @@ Example format:
 # PPWR Pipeline
 # -------------------------
 MENTION_PATTERNS = {
-    "PPWD 94/62/EC": r"94/62\s*/?\s*ec|packaging and packaging waste directive|packaging directive|ppwd",
-    "PPWD 94/62/1": r"94/62/1",
-    "PPWR (EU) 2025/40": r"2025/40|packaging and packaging waste regulation|ppwr",
-    "Lead (Pb)": r"\blead(?!\s+to)\b|\bpb\b",
-    "Cadmium (Cd)": r"\bcadmium\b|\bcd\b",
-    "Hexavalent Chromium (Cr6+)": r"hexavalent chromium|cr6|cr\(vi\)",
+    "PPWD 94/62/EC": r"(?i)94/62\s*/?\s*ec|packaging and packaging waste directive|packaging directive(?!\s+for)|ppwd",
+    "PPWD 94/62/1": r"(?i)94/62/1",
+    "PPWR (EU) 2025/40": r"(?i)2025/40|packaging and packaging waste regulation|ppwr",
+    # Exclude "lead to", "mislead", and "lead time" - only match metal references
+    "Lead (Pb)": r"(?i)\blead(?!\s+(to|time|in|by|through))\b(?![a-z])|\bpb\b(?!\s*-?\s*(rom|&j|ratio))",
+    # Exclude "CD", "CD-ROM", require context like "metal", "ppm", or chemical notation
+    "Cadmium (Cd)": r"(?i)\bcadmium\b|\bcd\b(?=\s*(metal|ppm|\(|concentration|content|level))",
+    "Hexavalent Chromium (Cr6+)": r"(?i)hexavalent chromium|cr\s*6\+?|cr\s*\(vi\)|chrome\s*6",
 }
 
 
@@ -303,153 +304,8 @@ def summarize_mentions_with_llm(llm, snippets: list[dict]) -> list[dict]:
         return []
 
 
-def run_ppwr_pipeline(bom_material_ids: list[str], pdfs: list[dict]) -> dict:
-    """Process supplier declaration PDFs and join to BOM rows by material_id.
-
-    pdfs: list of { 'filename': str, 'bytes': bytes }
-    Returns dict with 'inserted', 'updated', 'skipped'.
-    """
-    try:
-        embedder, llm = initialize_azure_models()
-        runtime_config = build_runtime_config(embedder, llm)
-        role = "You are a precise PPWR data extraction assistant."
-        system_prompt = ppwr_queries.get('system', '')
-        flags_prompt = ppwr_queries.get('flags', '')
-        notes_prompt = ppwr_queries.get('notes', '')
-        mentions_prompt = ppwr_queries.get('mentions', '')
-
-        inserted = updated = skipped = 0
-        skipped_reasons = []
-        session = SessionLocal()
-
-        # Prepare fast lookup of BOM material ids
-        bom_set = set([str(m).strip() for m in bom_material_ids if str(m).strip()])
-        bom_set_upper = {m.upper() for m in bom_set}
-
-        for pdf in pdfs:
-            fname = pdf.get('filename') or 'document.pdf'
-            file_bytes = pdf.get('bytes') or b''
-            context = extract_text_from_pdf_bytes(file_bytes)
-            if not context:
-                skipped += 1
-                skipped_reasons.append({"file": fname, "reason": "empty_text"})
-                continue
-
-            # Combine prompts into one simple JSON-directed query
-            prompt = f"{system_prompt}\n\n{flags_prompt}\n\n{notes_prompt}\n\n{mentions_prompt}\n\nReturn only JSON."
-            full_prompt = raw_prompt_template(context, prompt, role)
-            llm_resp = llm.generate(full_prompt, context, "Extract PPWR fields", temperature=0.2, max_tokens=1024)
-            items = parse_llm_response(llm_resp)
-            normalized = parse_ppwr_output(items)
-            fallback_mentions = extract_regulatory_mentions_windows(context, line_window=50)
-            llm_mentions = summarize_mentions_with_llm(llm, fallback_mentions)
-            if not normalized and len(bom_set) == 1:
-                # Ensure we still persist mention evidence even if the LLM extraction is empty
-                normalized = [{
-                    'material_id': list(bom_set)[0],
-                    'supplier_name': None,
-                    'declaration_date': None,
-                    'ppwr_compliant': None,
-                    'packaging_recyclability': None,
-                    'recycled_content_percent': None,
-                    'restricted_substances': [],
-                    'notes': None,
-                    'regulatory_mentions': llm_mentions if llm_mentions else fallback_mentions,
-                }]
-            seen_materials = set()
-
-            for rec in normalized:
-                mid_raw = rec.get('material_id') or ''
-                mid_norm = str(mid_raw).strip()
-                mid_upper = mid_norm.upper()
-
-                # Fallback: if LLM did not return material_id, and we have exactly one BOM id, use it.
-                if not mid_norm and len(bom_set) == 1:
-                    mid_norm = list(bom_set)[0]
-                    mid_upper = mid_norm.upper()
-                # Allow case-insensitive match to BOM
-                if mid_upper in bom_set_upper:
-                    # Resolve to original casing from bom_set if possible
-                    for m in bom_set:
-                        if m.upper() == mid_upper:
-                            mid_norm = m
-                            break
-                else:
-                    # If only one BOM id was provided, fall back to it to avoid losing the assessment
-                    if len(bom_set) == 1:
-                        mid_norm = list(bom_set)[0]
-                        mid_upper = mid_norm.upper()
-                    else:
-                        skipped += 1
-                        skipped_reasons.append({"file": fname, "reason": "material_not_in_bom", "material_id": mid_norm})
-                        continue
-
-                # Avoid multiple inserts for the same material within one PDF
-                if mid_upper in seen_materials:
-                    skipped += 1
-                    skipped_reasons.append({"file": fname, "reason": "duplicate_material_in_pdf", "material_id": mid_norm})
-                    continue
-                seen_materials.add(mid_upper)
-
-                # Derive compliance: if restricted_substances present and non-empty -> non-compliant, else compliant
-                restricted_list = rec.get('restricted_substances', []) or []
-                ppwr_compliant = rec.get('ppwr_compliant')
-                if ppwr_compliant is None:
-                    ppwr_compliant = False if len(restricted_list) > 0 else True
-
-                # Upsert into PPWRAssessment
-                existing = session.query(PPWRAssessment).filter_by(material_id=mid_norm).first()
-                reg_mentions = rec.get('regulatory_mentions') or []
-                # Prefer LLM-assessed mentions; fall back to regex snippets if LLM empty
-                mentions_source = llm_mentions if llm_mentions else fallback_mentions
-                if mentions_source:
-                    merged = []
-                    seen_mentions = set()
-                    for m in reg_mentions + mentions_source:
-                        if not isinstance(m, dict):
-                            continue
-                        keyword = str(m.get('keyword') or '').strip()
-                        text_val = str(m.get('text') or '').strip()
-                        compliant_val = m.get('compliant')
-                        if isinstance(compliant_val, str):
-                            c = compliant_val.strip().lower()
-                            compliant_val = True if c in {'true','yes','y','1'} else False if c in {'false','no','n','0'} else None
-                        elif compliant_val not in (True, False):
-                            compliant_val = None
-                        if not keyword and not text_val:
-                            continue
-                        key = (keyword.lower(), text_val)
-                        if key in seen_mentions:
-                            continue
-                        seen_mentions.add(key)
-                        entry = {'keyword': keyword, 'text': text_val}
-                        if compliant_val in (True, False, None):
-                            entry['compliant'] = compliant_val
-                        merged.append(entry)
-                    reg_mentions = merged
-
-                payload = {
-                    'material_id': mid_norm,
-                    'supplier_name': rec.get('supplier_name'),
-                    'declaration_date': rec.get('declaration_date'),
-                    'ppwr_compliant': ppwr_compliant,
-                    'packaging_recyclability': rec.get('packaging_recyclability'),
-                    'recycled_content_percent': rec.get('recycled_content_percent'),
-                    'restricted_substances_json': json.dumps(restricted_list),
-                    'notes': rec.get('notes'),
-                    'source_path': fname,
-                    'regulatory_mentions_json': json.dumps(reg_mentions),
-                }
-                if existing:
-                    for k, v in payload.items():
-                        setattr(existing, k, v)
-                    updated += 1
-                else:
-                    session.add(PPWRAssessment(**payload))
-                    inserted += 1
-            session.commit()
-
-        return {'inserted': inserted, 'updated': updated, 'skipped': skipped, 'skipped_reasons': skipped_reasons}
-    except Exception as e:
-        logging.error(f"PPWR pipeline failed: {e}")
-        return {'error': str(e)}
+# OLD DIRECT EXTRACTION PIPELINE REMOVED - Now using RAG-based approach with ChromaDB
+# The new workflow:
+# 1. Upload PDF -> /ppwr/index-declaration (chunks + embeds to ChromaDB)
+# 2. Evaluate -> /ppwr/assess (queries ChromaDB, retrieves relevant chunks, feeds to LLM)
+# See backend/main.py for new RAG-based endpoints

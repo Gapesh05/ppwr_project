@@ -28,8 +28,16 @@ class PPWRBOM(Base):
 
     material_id = Column(String(100), primary_key=True, nullable=False)
     sku = Column(String(100), nullable=True, index=True)
+    product = Column(String(200), nullable=True)
     material_name = Column(String(200), nullable=True)
-    supplier_name = Column(String(255), nullable=True)
+    supplier_name = Column(String(255), nullable=True, index=True)
+    
+    # Component/subcomponent columns for evaluation page
+    component = Column(String(100), nullable=True)
+    component_description = Column(String(500), nullable=True)
+    subcomponent = Column(String(200), nullable=True)
+    subcomponent_description = Column(String(500), nullable=True)
+    
     ppwr_flag = Column(Boolean, nullable=True, default=False)
     uploaded_at = Column(DateTime, nullable=True, default=datetime.utcnow)
 
@@ -58,51 +66,67 @@ class MaterialDeclarationLink(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class PPWRMaterialDeclarationLink(Base):
-    __tablename__ = "ppwr_material_declaration_links"
+    __tablename__ = "ppwr_material_declaration_link"  # Fixed: singular to match database
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     material_id = Column(String(100), index=True, nullable=False)
-    decl_id = Column(Integer, index=True, nullable=False)
-    sku = Column(String(100), index=True, nullable=True)
+    bom_material_id = Column(String(100), index=True, nullable=True)
+    decl_material_v1 = Column(Integer, index=True, nullable=False)  # Links to supplier_declaration_v1.id
+    flag = Column(Boolean, nullable=True, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 def init_backend_db():
     try:
         Base.metadata.create_all(bind=engine)
         try:
             with engine.begin() as conn:
+                # Ensure uploaded_at column exists in ppwr_bom
                 conn.execute(sa_text("""
-                    ALTER TABLE ppwr_assessments
-                    ADD COLUMN IF NOT EXISTS regulatory_mentions_json TEXT;
+                    ALTER TABLE ppwr_bom
+                    ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
                 """))
         except Exception as e:
-            logging.warning(f"Deferred column ensure (regulatory_mentions_json) failed: {e}")
+            logging.warning(f"Deferred column ensure (uploaded_at) failed: {e}")
     except Exception as e:
         logging.warning(f"Deferred DB init (create_all failed): {e}")
 
 
 # ======================
-# PPWR Assessment Model
+# PPWR Result Model (PPWR Chemical Data)
 # ======================
-class PPWRAssessment(Base):
-    __tablename__ = 'ppwr_assessments'
+class PPWRResult(Base):
+    __tablename__ = 'ppwr_result'
+
+    material_id = Column(String(100), primary_key=True, nullable=False)
+    cas_id = Column(String(255), nullable=True)
+    supplier_name = Column(String(255), nullable=True)
+    status = Column(String(100), nullable=True, index=True)
+    chemical = Column(String(500), nullable=True)
+    concentration = Column(Float, nullable=True)
+
+
+# ======================
+# Supplier Declaration V1 (PDF Storage)
+# ======================
+class SupplierDeclarationV1(Base):
+    __tablename__ = 'supplier_declaration_v1'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    material_id = Column(String(128), index=True, nullable=False, unique=True)
-    supplier_name = Column(String(256), nullable=True)
-    declaration_date = Column(String(64), nullable=True)
-    ppwr_compliant = Column(Boolean, default=None)
-    packaging_recyclability = Column(String(128), nullable=True)
-    recycled_content_percent = Column(Float, nullable=True)
-    restricted_substances_json = Column(Text, nullable=True)
-    notes = Column(Text, nullable=True)
-    source_path = Column(Text, nullable=True)
-    regulatory_mentions_json = Column(Text, nullable=True)
+    material_id = Column(String(100), index=True, nullable=True)
+    material_name = Column(String(200), nullable=True)
+    original_filename = Column(String(255), nullable=True)
+    document_type = Column(String(50), nullable=True)
+    file_size = Column(Integer, nullable=True)
+    file_data = Column(LargeBinary, nullable=True)
+    upload_date = Column(DateTime, nullable=True, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 def _ensure_tables_once():
+    """Ensure all tables are created (idempotent)"""
     try:
         Base.metadata.create_all(bind=engine)
+        logging.info("Backend tables ensured via create_all")
     except Exception as e:
         logging.warning(f"Deferred DB init (create_all failed): {e}")
 

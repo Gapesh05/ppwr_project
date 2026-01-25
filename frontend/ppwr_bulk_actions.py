@@ -176,12 +176,39 @@ def register_ppwr_bulk_routes(app, db, SupplierDeclaration, PPWRBOM, PPWRMateria
     def _bulk_evaluate_v2(sku, material_ids, assess_func):
         """Trigger PPWR assessment for selected materials.
         
-        Calls FastAPI /ppwr/assess with supplier declaration bytes.
+        Validates declarations exist before calling FastAPI.
+        Returns 400 with material names if any are missing declarations.
         """
         try:
+            # Validate: Check which materials have declarations
+            materials_with_decls = []
+            materials_without_decls = []
+            
+            for mat_id in material_ids:
+                decl = db.session.query(SupplierDeclaration).filter_by(
+                    material_id=mat_id
+                ).first()
+                
+                if decl and decl.file_data:
+                    materials_with_decls.append(mat_id)
+                else:
+                    # Get material name for user-friendly error message
+                    bom_row = db.session.query(PPWRBOM).filter_by(material_id=mat_id).first()
+                    mat_name = bom_row.material_name if bom_row else mat_id
+                    materials_without_decls.append(mat_name)
+            
+            # Critical validation: Prevent evaluation if ANY materials lack declarations
+            if materials_without_decls:
+                missing_names = ', '.join(materials_without_decls)
+                return jsonify({
+                    'success': False,
+                    'error': f'No document uploaded for: {missing_names}',
+                    'missing_materials': materials_without_decls
+                }), 400
+            
             declarations = db.session.query(SupplierDeclaration).filter(
                 SupplierDeclaration.sku == sku,
-                SupplierDeclaration.material_id.in_(material_ids),
+                SupplierDeclaration.material_id.in_(materials_with_decls),
                 SupplierDeclaration.file_data.isnot(None)
             ).all()
             
@@ -195,7 +222,7 @@ def register_ppwr_bulk_routes(app, db, SupplierDeclaration, PPWRBOM, PPWRMateria
                 files.append((fname, bytes(decl.file_data), 'application/pdf'))
             
             # Call FastAPI /ppwr/assess
-            result = assess_func(material_ids, files)
+            result = assess_func(materials_with_decls, files)
             
             if result and result.get('success'):
                 return jsonify({

@@ -17,7 +17,8 @@ CONFIG = {
         "chroma": {
             "host": "10.134.44.228",
             "port": 8000,
-            "collection_name": "PFAS_10110_PFAS"
+            "collection_name": "PFAS_10110_PFAS",
+            "ppwr_collection_name": "PPWR_Supplier_Declarations"
         },
         "chunking": {
             "size": 300,

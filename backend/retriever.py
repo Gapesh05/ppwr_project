@@ -5,6 +5,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from chromadb.config import Settings
 import io
+import time
 try:
     import PyPDF2
 except Exception:
@@ -13,17 +14,40 @@ except Exception:
 # -------------------------
 # CHROMA RETRIEVER FUNCTIONS
 # -------------------------
-def connect_chromadb(host, port):
-    """Connect to ChromaDB instance"""
-    try:
-        return chromadb.HttpClient(
-            host=host,
-            port=port,
-            settings=Settings(anonymized_telemetry=False)
-        )
-    except Exception as e:
-        logging.error(f"Failed to connect to ChromaDB at {host}:{port} - {e}")
-        raise e
+def connect_chromadb(host, port, max_retries=3, retry_delay=2):
+    """Connect to ChromaDB instance with retry logic and health check
+    
+    Args:
+        host: ChromaDB host address
+        port: ChromaDB port number
+        max_retries: Maximum connection attempts (default: 3)
+        retry_delay: Delay between retries in seconds (default: 2)
+        
+    Returns:
+        chromadb.HttpClient: Connected ChromaDB client
+        
+    Raises:
+        ConnectionError: If connection fails after all retries
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            client = chromadb.HttpClient(
+                host=host,
+                port=port,
+                settings=Settings(anonymized_telemetry=False)
+            )
+            # Test connection with heartbeat
+            client.heartbeat()
+            logging.info(f"✅ ChromaDB connected at {host}:{port} (attempt {attempt}/{max_retries})")
+            return client
+        except Exception as e:
+            logging.warning(f"ChromaDB connection attempt {attempt}/{max_retries} failed: {e}")
+            if attempt == max_retries:
+                error_msg = f"ChromaDB unreachable at {host}:{port} after {max_retries} attempts"
+                logging.error(error_msg)
+                raise ConnectionError(error_msg)
+            logging.info(f"Retrying in {retry_delay} seconds...")
+            time.sleep(retry_delay)
 
 def get_collection(client, name):
     """Get collection from ChromaDB client"""
@@ -184,3 +208,33 @@ def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> str:
     except Exception as e:
         logging.error(f"Failed to extract PDF text: {e}")
         return ""
+
+
+def chunk_text_by_words(text: str, size: int = 300, overlap: int = 50) -> list:
+    """Split text into word-based chunks with overlap for RAG indexing.
+    
+    Args:
+        text: Input text to chunk
+        size: Number of words per chunk (default 300)
+        overlap: Number of overlapping words between chunks (default 50)
+    
+    Returns:
+        List of text chunks
+    """
+    if not text:
+        return []
+    
+    words = text.split()
+    if not words:
+        return []
+    
+    chunks = []
+    step = max(size - overlap, 1)
+    i = 0
+    
+    while i < len(words):
+        chunk = " ".join(words[i:i+size])
+        chunks.append(chunk)
+        i += step
+    
+    return chunks

@@ -44,48 +44,65 @@ def parse_llm_response(response: str) -> List[Dict[str, Any]]:
 
 
 def parse_ppwr_output(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Normalize PPWR output into a consistent schema.
-
-    Ensures keys and coercions:
-      - material_id: str
+    """Normalize PPWR output to match ppwr_result table schema.
+    
+    Simplifies complex LLM extraction into evaluation-compatible format:
+      - material_id: str (primary key)
       - supplier_name: str|None
-      - declaration_date: str|None
-      - ppwr_compliant: bool|None
-      - packaging_recyclability: str|None
-      - recycled_content_percent: float|None
-      - restricted_substances: list[str]
-      - notes: str|None
+      - cas_id: str|None
+      - chemical: str (joined restricted substances or direct value)
+      - concentration: float|None
+      - status: 'Compliant'|'Non-Compliant'
+      
+    Rich metadata (packaging_recyclability, declaration_date, regulatory_mentions)
+    is preserved in intermediate processing but not stored in ppwr_result.
     """
     normalized = []
     for it in items:
         if not isinstance(it, dict):
             continue
+            
         material_id = str(it.get('material_id') or '').strip()
         supplier_name = it.get('supplier_name') or None
-        declaration_date = it.get('declaration_date') or None
+        cas_id = it.get('cas_id') or None
+        
+        # Parse ppwr_compliant boolean
         ppwr_val = it.get('ppwr_compliant')
         if isinstance(ppwr_val, str):
             ppwr_val = ppwr_val.strip().lower() in ('true', 'yes', 'y', '1')
         elif isinstance(ppwr_val, (int, float)):
             ppwr_val = bool(ppwr_val)
-
-        packaging_recyclability = it.get('packaging_recyclability') or None
-        rcp = it.get('recycled_content_percent')
-        try:
-            recycled_content_percent = float(rcp) if rcp is not None and str(rcp).strip() != '' else None
-        except Exception:
-            recycled_content_percent = None
+        
+        # Extract and join restricted substances
         restricted = it.get('restricted_substances')
         if isinstance(restricted, list):
             restricted_substances = [str(x) for x in restricted]
         elif isinstance(restricted, str):
-            # split by commas
             restricted_substances = [s.strip() for s in restricted.split(',') if s.strip()]
         else:
             restricted_substances = []
-        notes = it.get('notes') or None
-
-        # Regulatory mentions: expect list of {keyword, text, compliant?}
+        
+        # Join to chemical string (primary display field)
+        chemical = ', '.join(restricted_substances) if restricted_substances else it.get('chemical')
+        
+        # Extract concentration (try recycled_content_percent or direct concentration)
+        concentration = it.get('concentration')
+        if concentration is None:
+            rcp = it.get('recycled_content_percent')
+            try:
+                concentration = float(rcp) if rcp is not None and str(rcp).strip() != '' else None
+            except Exception:
+                concentration = None
+        
+        # Map boolean to status enum
+        if ppwr_val is None:
+            # Infer from restricted substances presence
+            ppwr_val = False if len(restricted_substances) > 0 else True
+        status = 'Compliant' if ppwr_val else 'Non-Compliant'
+        
+        # Preserve rich metadata for logging/intermediate processing
+        # (regulatory_mentions, packaging_recyclability, declaration_date, notes)
+        # but not stored in ppwr_result table
         mentions_raw = it.get('regulatory_mentions')
         regulatory_mentions: List[Dict[str, str]] = []
         if isinstance(mentions_raw, str):
@@ -115,17 +132,18 @@ def parse_ppwr_output(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                     mv = m.strip()
                     if mv:
                         regulatory_mentions.append({'keyword': '', 'text': mv, 'compliant': None})
-
+        
+        # Return simplified schema matching ppwr_result table
         normalized.append({
             'material_id': material_id,
             'supplier_name': supplier_name,
-            'declaration_date': declaration_date,
-            'ppwr_compliant': ppwr_val if ppwr_val in (True, False) else None,
-            'packaging_recyclability': packaging_recyclability,
-            'recycled_content_percent': recycled_content_percent,
-            'restricted_substances': restricted_substances,
-            'notes': notes,
-            'regulatory_mentions': regulatory_mentions,
+            'cas_id': cas_id,
+            'chemical': chemical,
+            'concentration': concentration,
+            'status': status,
+            'ppwr_compliant': ppwr_val,  # Preserved for intermediate logic
+            'restricted_substances': restricted_substances,  # Preserved for mapping
+            'regulatory_mentions': regulatory_mentions  # Preserved for logging
         })
-
+    
     return normalized

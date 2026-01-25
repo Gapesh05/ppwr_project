@@ -14,18 +14,23 @@ class Route(db.Model):
 class PPWRBOM(db.Model):
     __tablename__ = 'ppwr_bom'
 
-    # Minimal PPWR BOM schema, decoupled from PFAS
-    # Use material_id as primary key to keep rows unique per material for PPWR flows
+    # PPWR BOM schema matching database structure
     material_id = db.Column(db.String(100), primary_key=True)
-    # Optional fields for convenience and display
     sku = db.Column(db.String(100), nullable=True, index=True)
+    product = db.Column(db.String(200), nullable=True)
     material_name = db.Column(db.String(200), nullable=True)
-    supplier_name = db.Column(db.String(255), nullable=True)
+    supplier_name = db.Column(db.String(255), nullable=True, index=True)
+    
+    # Component/subcomponent columns for evaluation page display
+    component = db.Column(db.String(100), nullable=True)
+    component_description = db.Column(db.String(500), nullable=True)
+    subcomponent = db.Column(db.String(200), nullable=True)
+    subcomponent_description = db.Column(db.String(500), nullable=True)
 
     # PPWR ingestion/evaluation flag
     ppwr_flag = db.Column(db.Boolean, nullable=True, default=False)
 
-    # Upload timestamp
+    # Upload timestamp (added via migration 015)
     uploaded_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
 
 
@@ -39,6 +44,18 @@ class PFASMaterialChemicals(db.Model):
     concentration_ppm = db.Column(db.Numeric(10, 4))
     supplier_name = db.Column(db.String(255))
     reference_doc = db.Column(db.String(255))  # ✅ corrected name
+
+
+class PPWRResult(db.Model):
+    __tablename__ = 'ppwr_result'
+    
+    # PPWR chemical composition data
+    material_id = db.Column(db.String(100), primary_key=True)
+    cas_id = db.Column(db.String(255), nullable=True)
+    supplier_name = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(100), nullable=True, index=True)
+    chemical = db.Column(db.String(500), nullable=True)
+    concentration = db.Column(db.Float, nullable=True)
 
 
 class PFASRegulations(db.Model):
@@ -77,13 +94,14 @@ class PFASBOMAudit(db.Model):
     ppwr_flag = db.Column(db.Boolean, default=False)
 
 class PPWRMaterialDeclarationLink(db.Model):
-    __tablename__ = 'ppwr_material_declaration_links'
+    __tablename__ = 'ppwr_material_declaration_link'  # Fixed: singular to match database
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     material_id = db.Column(db.String(100), index=True, nullable=False)
-    # In Option B, SupplierDeclaration uses material_id as PK; link table becomes redundant.
-    # Kept for backward-compat but no longer authoritative. decl_id is deprecated.
-    decl_id = db.Column(db.Integer, index=True, nullable=False)
+    bom_material_id = db.Column(db.String(100), index=True, nullable=True)
+    decl_material_v1 = db.Column(db.Integer, index=True, nullable=False)  # Links to supplier_declaration_v1.id
+    flag = db.Column(db.Boolean, nullable=True, default=False)
+    created_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -91,54 +109,32 @@ class PPWRMaterialDeclarationLink(db.Model):
             'material_id': self.material_id,
             'decl_id': self.decl_id,
         }
-class SupplierDeclaration(db.Model):
-    __tablename__ = 'supplier_declarations'
-    # Option B: Use material_id as the primary key (one row per material)
-    material_id = db.Column(db.String(100), primary_key=True)
-    sku = db.Column(db.String(100), index=True)
-
-    # File naming / storage
-    original_filename = db.Column(db.String(255), nullable=False)
-    storage_filename = db.Column(db.String(1000), nullable=True)
-    file_path = db.Column(db.String(1000), nullable=True)
+class SupplierDeclarationV1(db.Model):
+    __tablename__ = 'supplier_declaration_v1'  # Fixed: matches actual database table
+    
+    # Primary key is INTEGER autoincrement (not material_id)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    material_id = db.Column(db.String(100), index=True, nullable=True)
+    material_name = db.Column(db.String(200), nullable=True)
+    
+    # File storage
+    original_filename = db.Column(db.String(255), nullable=True)
     document_type = db.Column(db.String(50), nullable=True)
-
-    # Supplier / description metadata
-    supplier_name = db.Column(db.String(255), nullable=True)
-    description = db.Column(db.Text, nullable=True)
-
+    file_size = db.Column(db.BigInteger, nullable=True)
+    file_data = db.Column(db.LargeBinary, nullable=True)  # Actual PDF bytes
+    
     # Timestamps
     upload_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
-    upload_timestamp = db.Column(db.Integer, nullable=True)
-    upload_timestamp_ms = db.Column(db.BigInteger, nullable=True)
-
-    # File metadata
-    file_size = db.Column(db.BigInteger, nullable=True)
-    file_data = db.Column(db.LargeBinary, nullable=True)
-
-    # Flexible JSON metadata
-    metadata_json = db.Column(db.JSON, nullable=True)
-
-    # Soft-delete flag
-    is_archived = db.Column(db.Boolean, nullable=False, default=False)
 
     def to_dict(self):
         return {
+            'id': self.id,
             'material_id': self.material_id,
-            'sku': self.sku,
-            'material': self.material_id,
+            'material_name': self.material_name,
             'original_filename': self.original_filename,
-            'storage_filename': self.storage_filename,
-            'file_path': self.file_path,
             'document_type': self.document_type,
-            'supplier_name': self.supplier_name,
-            'description': self.description,
-            'upload_date': self.upload_date.isoformat() if self.upload_date else None,
-            'upload_timestamp': self.upload_timestamp,
-            'upload_timestamp_ms': self.upload_timestamp_ms,
             'file_size': self.file_size,
-            'metadata': self.metadata_json,
-            'is_archived': getattr(self, 'is_archived', False)
+            'upload_date': self.upload_date.isoformat() if self.upload_date else None
         }
 
 

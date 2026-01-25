@@ -174,37 +174,77 @@
         <span class="card-value" style="color:#10b981;">{{ stats.get('conformance', 0) }}</span>
       </div>
     </div>
-    <table class="table-glass">
+    
+    <!-- Search Bar + Download Button -->
+    <div style="margin-top:1.5rem; margin-bottom:1rem;">
+      <div style="display:flex; gap:0.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+        <div style="display:flex; gap:0.5rem; align-items:center; flex:1;">
+          <input 
+            type="text" 
+            id="materialSearchInput" 
+            class="form-control" 
+            placeholder="Search by material name..." 
+            onkeyup="searchMaterialTable()" 
+            style="max-width:400px; border-radius:8px; border:1.5px solid #e0e7ff; padding:0.6rem;" 
+          />
+          <button 
+            class="btn btn-sm btn-outline-secondary" 
+            onclick="clearMaterialSearch()" 
+            style="border-radius:8px; padding:0.5rem 1rem;"
+          >
+            Clear
+          </button>
+          <small id="searchResults" class="text-muted" style="margin-left:0.5rem;"></small>
+        </div>
+        <div>
+          <a href="{% if sku %}{{ url_for('download_ppwr_evaluation_csv', sku=sku) }}{% else %}#{% endif %}" 
+             class="btn btn-success btn-sm"
+             {% if not rows or rows|length == 0 %}disabled onclick="return false;"{% endif %}
+             style="border-radius:8px; padding:0.5rem 1rem; white-space:nowrap;">
+            <i class="bi bi-download"></i> Download CSV
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <table class="table-glass" id="assessmentResultsTable">
       <thead>
         <tr>
           <th>Component</th>
           <th>Sub-Component</th>
           <th>Material</th>
           <th>Supplier</th>
+          <th>CAS ID</th>
           <th>Chemical</th>
+          <th>Concentration</th>
           <th>Status</th>
-          <th>CAS Number</th>
-          <th>Chemical Concentration</th>
         </tr>
       </thead>
       <tbody>
         {% if rows and rows|length > 0 %}
           {% for row in rows %}
-          <tr>
-            <td>{{ row.component or '' }}</td>
-            <td>{{ row.sub_component or '' }}</td>
-            <td>{{ row.material or '' }}</td>
-            <td>{{ row.supplier or '' }}</td>
-            <td>{{ row.chemical or '' }}</td>
+          <tr data-material-name="{{ (row.material_name or '').lower() }}">
+            <td>{{ row.component }}</td>
+            <td>{{ row.sub_component }}</td>
             <td>
-              {% if row.status and row.status.lower() == 'compliance' %}
-                <span class="badge-status">Compliance</span>
-              {% else %}
-                <span class="badge-status non">Non-Conformance</span>
+              <div>{{ row.material_name }}</div>
+              {% if row.material_id != 'No Data' %}
+                <small class="text-muted">ID: {{ row.material_id }}</small>
               {% endif %}
             </td>
-            <td>{{ row.cas_number or 'No Data' }}</td>
-            <td>{{ row.concentration or 'No Data' }}</td>
+            <td>{{ row.supplier }}</td>
+            <td>{{ row.cas_id }}</td>
+            <td>{{ row.chemical }}</td>
+            <td>{{ row.concentration }}</td>
+            <td>
+              {% if row.status_color == 'success' %}
+                <span class="badge-status">{{ row.status }}</span>
+              {% elif row.status_color == 'danger' %}
+                <span class="badge-status non">{{ row.status }}</span>
+              {% else %}
+                <span class="badge-status" style="background:#fff3cd; color:#856404; border:1px solid #ffc107;">{{ row.status }}</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}  
         {% else %}
@@ -212,5 +252,52 @@
         {% endif %}
       </tbody>
     </table>
+    
+    <script>
+    function searchMaterialTable() {
+      const input = document.getElementById('materialSearchInput');
+      const filter = input.value.toLowerCase().trim();
+      const table = document.getElementById('assessmentResultsTable');
+      const rows = table.getElementsByTagName('tr');
+      const resultsDiv = document.getElementById('searchResults');
+      
+      let visibleCount = 0;
+      let firstVisible = null;
+      
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const materialName = row.getAttribute('data-material-name') || '';
+        
+        if (filter === '' || materialName.includes(filter)) {
+          row.style.display = '';
+          visibleCount++;
+          if (!firstVisible) firstVisible = row;
+          
+          if (filter !== '' && materialName.includes(filter)) {
+            row.style.backgroundColor = '#fff3cd';
+            row.style.transition = 'background-color 0.3s';
+          } else {
+            row.style.backgroundColor = '';
+          }
+        } else {
+          row.style.display = 'none';
+        }
+      }
+      
+      if (filter !== '') {
+        resultsDiv.textContent = visibleCount + ' result(s) found';
+        if (firstVisible) {
+          firstVisible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        resultsDiv.textContent = '';
+      }
+    }
+    
+    function clearMaterialSearch() {
+      document.getElementById('materialSearchInput').value = '';
+      searchMaterialTable();
+    }
+    </script>
   </div>
 </div>

@@ -10,7 +10,7 @@ from logging.handlers import RotatingFileHandler
 from openpyxl.styles import PatternFill
 import requests
 from flask_sqlalchemy import SQLAlchemy
-from models import db as models_db, Route, PFASMaterialChemicals, PFASRegulations, PFASBOMAudit, SupplierDeclaration, MaterialDeclarationLink, PPWRBOM, PPWRMaterialDeclarationLink
+from models import db as models_db, Route, PFASMaterialChemicals, PFASRegulations, PFASBOMAudit, SupplierDeclarationV1, MaterialDeclarationLink, PPWRBOM, PPWRMaterialDeclarationLink, PPWRResult
 from fastapi_client import (
     ingest_material_data,
     get_assessments as fastapi_get_assessments,
@@ -26,29 +26,23 @@ import sqlalchemy
 from sqlalchemy import text
 from flask import Response   # if you want template download route returning CSV
 from decimal import Decimal, InvalidOperation
-from werkzeug.utils import secure_filename
-import uuid
 import re
-import tempfile
-import shutil
 import time
 from sqlalchemy import and_
 
 
 # ==================== HELPERS ====================
 def _build_distinct_ppwr_declarations():
-    """Return one row per material (SupplierDeclaration has PK=material_id)."""
+    """Return one row per material from supplier_declaration_v1 table."""
     try:
-        rows = SupplierDeclaration.query.filter_by(is_archived=False).order_by(SupplierDeclaration.upload_date.desc()).all()
+        rows = SupplierDeclarationV1.query.order_by(SupplierDeclarationV1.upload_date.desc()).all()
         out = []
         for r in rows:
             out.append({
                 'material_id': getattr(r, 'material_id', None),
-                'sku': r.sku,
                 'original_filename': r.original_filename,
                 'file_size': r.file_size,
                 'upload_date': r.upload_date.isoformat() if r.upload_date else None,
-                'is_archived': getattr(r, 'is_archived', False),
             })
         return out
     except Exception:
@@ -107,17 +101,159 @@ def shutdown_session(exception=None):
 @app.route('/ppwr/evaluation')
 def ppwr_assessment_evaluation_page():
     """
-    Render the standalone PPWR assessment evaluation UI page.
-    This route is for the dedicated evaluation UI, not tied to a specific SKU or declaration.
+    Render the standalone PPWR assessment evaluation UI page with data from ppwr_result + ppwr_bom.
+    Supports optional SKU filtering via ?sku=<value> query parameter.
     """
     try:
-        payload = fastapi_get_ppwr_evaluation_summary()
-        stats = (payload or {}).get('stats') or {}
-        rows = (payload or {}).get('rows') or []
-        return render_template('ppwr_assessment_evaluation.html', stats=stats, rows=rows)
+        # Get optional SKU filter from query string
+        sku_filter = request.args.get('sku', None)
+        
+        # Build query: Join ppwr_result + ppwr_bom to get complete evaluation data
+        # Columns needed: Component, Subcomponent, Material, Supplier, CAS_ID, Chemical, Concentration, Status
+        query = db.session.query(
+            PPWRBOM.component,
+            PPWRBOM.component_description,
+            PPWRBOM.subcomponent,
+            PPWRBOM.subcomponent_description,
+            PPWRBOM.material_id.label('material'),
+            PPWRBOM.material_name,
+            PPWRResult.supplier_name.label('supplier'),
+            PPWRResult.cas_id,
+            PPWRResult.chemical,
+            PPWRResult.concentration,
+            PPWRResult.status
+        ).join(
+            PPWRResult, PPWRBOM.material_id == PPWRResult.material_id, isouter=True
+        )
+        
+        # Apply SKU filter if provided
+        if sku_filter:
+            query = query.filter(PPWRBOM.sku == sku_filter)
+        
+        results = query.all()
+        
+        # Build rows for template
+        rows = []
+        stats = {
+            'total_files': 0,
+            'files_downloaded': 0,
+            'conformance': 0,
+            'non_conformance': 0
+        }
+        
+        for row in results:
+            # Determine status
+            status_display = row.status if row.status else 'Unknown'
+            if status_display.lower() in ('compliant', 'conformance', 'compliance'):
+                stats['conformance'] += 1
+                status_color = 'success'
+            elif status_display.lower() in ('non-compliant', 'non-conformance', 'non-compliance'):
+                stats['non_conformance'] += 1
+                status_color = 'danger'
+            else:
+                status_color = 'warning'
+            
+            rows.append({
+                'component': row.component or 'No Data',
+                'sub_component': row.subcomponent or 'No Data',
+                'material_id': row.material or 'No Data',
+                'material_name': row.material_name or 'No Data',
+                'supplier': row.supplier or 'No Data',
+                'cas_id': row.cas_id or 'No Data',
+                'chemical': row.chemical or 'No Data',
+                'concentration': f"{float(row.concentration):.2f} ppm" if row.concentration is not None else 'No Data',
+                'status': status_display,
+                'status_color': status_color
+            })
+        
+        # Calculate file stats
+        if sku_filter:
+            total_materials = db.session.query(PPWRBOM.material_id).filter_by(sku=sku_filter).distinct().count()
+            materials_with_results = db.session.query(PPWRBOM.material_id).filter_by(sku=sku_filter).join(
+                PPWRResult, PPWRBOM.material_id == PPWRResult.material_id
+            ).distinct().count()
+        else:
+            total_materials = db.session.query(PPWRBOM.material_id).distinct().count()
+            materials_with_results = db.session.query(PPWRBOM.material_id).join(
+                PPWRResult, PPWRBOM.material_id == PPWRResult.material_id
+            ).distinct().count()
+        
+        stats['total_files'] = total_materials
+        stats['files_downloaded'] = materials_with_results
+        
+        return render_template('ppwr_assessment_evaluation.html', stats=stats, rows=rows, sku=sku_filter)
     except Exception as e:
         app.logger.error(f"Error rendering PPWR assessment evaluation page: {e}", exc_info=True)
         return "Error loading evaluation page", 500
+
+@app.route('/api/ppwr/evaluation/download-csv/<sku>')
+def download_ppwr_evaluation_csv(sku):
+    """Download PPWR evaluation results as CSV file."""
+    try:
+        app.logger.info(f"📥 Generating CSV for SKU: {sku}")
+        
+        # Reuse existing evaluation query
+        query = db.session.query(
+            PPWRBOM.component,
+            PPWRBOM.subcomponent,
+            PPWRBOM.material_id,
+            PPWRBOM.material_name,
+            PPWRResult.supplier_name,
+            PPWRResult.cas_id,
+            PPWRResult.chemical,
+            PPWRResult.concentration,
+            PPWRResult.status
+        ).outerjoin(
+            PPWRResult, PPWRBOM.material_id == PPWRResult.material_id
+        ).filter(PPWRBOM.sku == sku)
+        
+        results = query.all()
+        
+        if not results:
+            flash("No data to export", "warning")
+            return redirect(url_for('ppwr_assessment_evaluation_page') + f'?sku={sku}')
+        
+        # Build CSV rows
+        csv_lines = [
+            "Component,Subcomponent,Material ID,Material Name,Supplier,CAS ID,Chemical,Concentration,Status"
+        ]
+        
+        for row in results:
+            # Escape commas in text fields
+            component = (row.component or 'No Data').replace(',', ';')
+            subcomponent = (row.subcomponent or 'No Data').replace(',', ';')
+            material_id = (row.material_id or 'No Data').replace(',', ';')
+            material_name = (row.material_name or 'No Data').replace(',', ';')
+            supplier = (row.supplier_name or 'No Data').replace(',', ';')
+            cas_id = (row.cas_id or 'No Data').replace(',', ';')
+            chemical = (row.chemical or 'No Data').replace(',', ';')
+            concentration = f"{float(row.concentration):.2f} ppm" if row.concentration is not None else 'No Data'
+            status = row.status if row.status else 'Unknown'
+            
+            csv_lines.append(
+                f'"{component}","{subcomponent}","{material_id}","{material_name}","{supplier}","{cas_id}","{chemical}","{concentration}","{status}"'
+            )
+        
+        # Generate CSV content
+        csv_content = "\n".join(csv_lines)
+        csv_bytes = csv_content.encode('utf-8')
+        
+        # Create filename with timestamp
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = f"PPWR_Evaluation_{sku}_{timestamp}.csv"
+        
+        return send_file(
+            BytesIO(csv_bytes),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        app.logger.error(f"CSV download failed: {e}", exc_info=True)
+        flash("Error generating CSV", "danger")
+        return redirect(url_for('ppwr_assessment_evaluation_page') + f'?sku={sku}')
+
 # Defer table creation to guarded startup block in __main__ to avoid
 # failing import when DB is temporarily unreachable.
 
@@ -273,15 +409,6 @@ def start_assessment_by_route(sku):
         app.logger.error(f"Start routing failed for {sku}: {e}", exc_info=True)
         flash('Failed to start assessment; defaulting to PPWR.', 'warning')
         return redirect(url_for('assessment_page', sku=sku, tab='ppwr'))
-
-@app.route('/filter', methods=['GET'])
-def filter():
-    """Simple route to render the single-material search page referenced by index.html."""
-    try:
-        return render_template('filterpage.html')
-    except Exception as e:
-        app.logger.error(f"Filter page render error: {e}", exc_info=True)
-        return redirect(url_for('index'))
 
 @app.route('/ppwr/declarations', methods=['GET'])
 def ppwr_declarations_page():
@@ -643,6 +770,7 @@ def ppwr_declarations_upload_proxy():
             existing.upload_date = datetime.utcnow()
             existing.file_size = file_size
             existing.file_data = file_bytes
+            decl = existing
         else:
             rec = SupplierDeclaration(
                 material_id=material,
@@ -658,6 +786,42 @@ def ppwr_declarations_upload_proxy():
                 file_data=file_bytes,
             )
             db.session.add(rec)
+            decl = rec
+        db.session.flush()  # Get ID before indexing
+        
+        # ✅ NEW: Trigger ChromaDB indexing after Postgres storage
+        try:
+            bom_row = db.session.query(PPWRBOM).filter_by(sku=sku, material_id=material).first()
+            bom_metadata = {
+                'material_name': bom_row.material_name if bom_row else '',
+                'supplier_name': bom_row.supplier_name if bom_row else supplier_name or '',
+                'component': bom_row.component if bom_row else '',
+                'subcomponent': bom_row.subcomponent if bom_row else ''
+            }
+            
+            # Call FastAPI indexing endpoint
+            from fastapi_client import FASTAPI_BASE_URL
+            from io import BytesIO
+            import requests
+            
+            index_url = f"{FASTAPI_BASE_URL}/ppwr/index-declaration"
+            index_files = {'file': (fname, BytesIO(file_bytes), 'application/pdf')}
+            index_data = {
+                'material_id': material,
+                'sku': sku,
+                'metadata': json.dumps(bom_metadata)
+            }
+            
+            index_resp = requests.post(index_url, files=index_files, data=index_data, timeout=60)
+            if index_resp.status_code == 200:
+                index_result = index_resp.json()
+                app.logger.info(f"✅ Indexed {index_result.get('chunks_created', 0)} chunks in ChromaDB for {material}")
+            else:
+                app.logger.warning(f"⚠️ ChromaDB indexing failed for {material}: HTTP {index_resp.status_code}")
+        except Exception as e_index:
+            app.logger.error(f"❌ ChromaDB indexing error for {material}: {e_index}")
+            # Continue with upload even if indexing fails
+        
         db.session.commit()
         flash('Declaration uploaded successfully', 'success')
     except Exception as e:
@@ -1691,13 +1855,42 @@ def api_supplier_declarations_upload():
                 if not mat_val:
                     errors.append({'filename': fname, 'error': 'Material could not be inferred from filename'})
                     continue
+                
+                # ✅ BACKEND VALIDATION: Check BOM row exists
                 try:
-                    exists = db.session.query(PFASBOM).filter_by(sku=sku, material=mat_val).first()
-                    if not exists:
-                        errors.append({'filename': fname, 'error': f"No BOM row for SKU '{sku}' and material '{mat_val}'"})
+                    bom_row = db.session.query(PPWRBOM).filter_by(sku=sku, material_id=mat_val).first()
+                    if not bom_row:
+                        errors.append({
+                            'filename': fname, 
+                            'error': f"No BOM row for SKU '{sku}' and material '{mat_val}'"
+                        })
                         continue
+                    
+                    # ✅ BACKEND VALIDATION: Check filename format MaterialID_MaterialName
+                    expected_mat_name = (bom_row.material_name or '').strip()
+                    if expected_mat_name:
+                        fname_lower = fname.lower()
+                        expected_lower = expected_mat_name.lower()
+                        base_name = os.path.splitext(fname)[0].lower()
+                        mat_val_lower = mat_val.lower()
+                        
+                        # Check if filename follows MaterialID_MaterialName pattern
+                        if not base_name.startswith(mat_val_lower + '_'):
+                            errors.append({
+                                'filename': fname,
+                                'error': f"Filename must start with '{mat_val}_'. Expected format: {mat_val}_{expected_mat_name}.pdf"
+                            })
+                            continue
+                        
+                        # Check if material name is present after material ID
+                        if expected_lower not in fname_lower:
+                            errors.append({
+                                'filename': fname,
+                                'error': f"Filename must contain material name. Expected format: {mat_val}_{expected_mat_name}.pdf"
+                            })
+                            continue
                 except Exception as _e:
-                    errors.append({'filename': fname, 'error': 'BOM validation failed'})
+                    errors.append({'filename': fname, 'error': f'Filename validation failed: {str(_e)}'})
                     continue
 
                 file_bytes = f.read()
@@ -1745,6 +1938,38 @@ def api_supplier_declarations_upload():
                     )
                     db.session.add(decl)
                 db.session.flush()
+                
+                # ✅ NEW: Trigger ChromaDB indexing after Postgres storage
+                try:
+                    bom_metadata = {
+                        'material_name': bom_row.material_name if bom_row else '',
+                        'supplier_name': bom_row.supplier_name if bom_row else supplier_name or '',
+                        'component': bom_row.component if bom_row else '',
+                        'subcomponent': bom_row.subcomponent if bom_row else ''
+                    }
+                    
+                    from fastapi_client import FASTAPI_BASE_URL
+                    from io import BytesIO
+                    import requests
+                    
+                    index_url = f"{FASTAPI_BASE_URL}/ppwr/index-declaration"
+                    index_files = {'file': (fname, BytesIO(file_bytes), 'application/pdf')}
+                    index_data = {
+                        'material_id': mat_val,
+                        'sku': sku,
+                        'metadata': json.dumps(bom_metadata)
+                    }
+                    
+                    index_resp = requests.post(index_url, files=index_files, data=index_data, timeout=60)
+                    if index_resp.status_code == 200:
+                        index_result = index_resp.json()
+                        app.logger.info(f"✅ Indexed {index_result.get('chunks_created', 0)} chunks in ChromaDB for {mat_val}")
+                    else:
+                        app.logger.warning(f"⚠️ ChromaDB indexing failed for {mat_val}: HTTP {index_resp.status_code}")
+                except Exception as e_index:
+                    app.logger.error(f"❌ ChromaDB indexing error for {mat_val}: {e_index}")
+                    # Continue with upload even if indexing fails
+                
                 uploaded.append({
                     'material_id': decl.material_id,
                     'original_filename': decl.original_filename,
@@ -2127,9 +2352,22 @@ def pfas_assessment(sku):
         return jsonify({"error": "Failed to retrieve data"}), 500
 
 def calculate_dynamic_summary(sku, assessment_data, strict: bool = False):
-    """
-    Calculate dynamic summary statistics based on regulatory thresholds.
+    """Calculate dynamic summary statistics based on regulatory thresholds.
+    
     Checks each chemical against all regulatory limits from pfas_regulation table.
+    Uses strict mode for PPWR (unknown concentration = non-conforming) or legacy
+    mode for PFAS (unknown concentration = no data).
+    
+    Args:
+        sku: Product SKU to analyze
+        assessment_data: Dict containing assessment data with 'data' key
+        strict: If True, treat unknown concentrations as non-conforming (PPWR mode)
+    
+    Returns:
+        Dict with keys:
+            files: {total, downloaded, not_found, progress_text}
+            review: {reviewed, total_expected, non_conforming, in_conformance,
+                    no_data, alt_found, alt_not_found, progress_text}
     """
     try:
         app.logger.info(f"🔍 Starting regulatory-based summary calculation for SKU: {sku}")
@@ -2209,11 +2447,23 @@ def calculate_dynamic_summary(sku, assessment_data, strict: bool = False):
 
 
 def calculate_regulatory_conformance(sku, strict: bool = False):
-    """
-    Calculate conformance/non-conformance based on actual regulatory thresholds.
+    """Calculate conformance/non-conformance based on actual regulatory thresholds.
+    
+    Evaluates materials against all applicable regulations (Australian AICS, IMAP,
+    Canadian DSL, PCTSR, EU REACH, US EPA TSCA) and categorizes each as conforming,
+    non-conforming, or no data available.
+    
+    Args:
+        sku: Product SKU to analyze
+        strict: If True (PPWR mode), unknown concentration = non-conforming.
+                If False (PFAS mode), unknown concentration = no_chemical_data
     
     Returns:
-        dict: Contains counts for non_conforming, in_conformance, no_chemical_data
+        dict: {
+            'non_conforming': int,  # Materials exceeding any threshold
+            'in_conformance': int,  # Materials within all thresholds
+            'no_chemical_data': int # Materials with missing data
+        }
     """
     try:
         app.logger.info(f"🏛️ Calculating regulatory conformance for SKU: {sku}")
@@ -2950,27 +3200,9 @@ def debug_raw_data(sku):
     except Exception as e:
         return jsonify({"error": str(e), "sku": sku})
     
-# ==================== FILTER PAGE API ENDPOINTS ====================
-@app.route('/api/skus')
-def get_skus():
-    """DEPRECATED: Legacy filter route. PFASBOM table replaced by route + ppwr_bom."""
-    return jsonify({"error": "This filter route is deprecated. PFASBOM table with component/subcomponent columns no longer exists. Use assessment pages directly."}), 410
-    
-@app.route('/api/components')
-def get_components():
-    """DEPRECATED: Legacy filter route. PFASBOM table replaced by route + ppwr_bom."""
-    return jsonify({"error": "This filter route is deprecated. PFASBOM table with component/subcomponent columns no longer exists. Use assessment pages directly."}), 410
-
-    
-@app.route('/api/subcomponents')
-def get_subcomponents():
-    """DEPRECATED: Legacy filter route. PFASBOM table replaced by route + ppwr_bom."""
-    return jsonify({"error": "This filter route is deprecated. PFASBOM table with component/subcomponent columns no longer exists. Use assessment pages directly."}), 410
-
-@app.route('/api/materials')
-def get_materials():
-    """DEPRECATED: Legacy filter route. PFASBOM table replaced by route + ppwr_bom."""
-    return jsonify({"error": "This filter route is deprecated. PFASBOM table with component/subcomponent columns no longer exists. Use assessment pages directly."}), 410
+# ==================== LEGACY FILTER ROUTES REMOVED ====================
+# Deprecated routes removed: /api/skus, /api/components, /api/subcomponents, /api/materials
+# Use unified assessment pages with search functionality instead
 
 @app.route('/api/export-excel/<sku>')
 def export_excel(sku):
@@ -3001,284 +3233,13 @@ def export_excel(sku):
             download_name=f'PFAS-Assessment-{sku}.xlsx'
         )
     except Exception as e:
-        print(f"Error exporting to Excel: {str(e)}")
+        app.logger.error(f"Error exporting to Excel: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
     
-@app.route('/api/filter-results')
-def filter_results():
-    """DEPRECATED: Legacy filter route. PFASBOM table replaced by route + ppwr_bom."""
-    return jsonify({"error": "This filter route is deprecated. PFASBOM table with component/subcomponent columns no longer exists. Use assessment pages directly."}), 410
-    skus = request.args.get('skus', '')
-    components = request.args.get('components', '')
-    subcomponents = request.args.get('subcomponents', '')
-    materials = request.args.get('materials', '')
-    region = request.args.get('region', '')
-    valid_columns = [
-        'australian_aics',
-        'australian_imap_tier_2',
-        'canadian_dsl',
-        'canada_pctsr_2012',
-        'eu_reach_pre_registered',
-        'eu_reach_registered_ppm',
-        'us_epa_tscainventory',
-        'us_epa_tsca12b'
-    ]
-    if not skus or region not in valid_columns:
-        return jsonify({"data": []})
-    sku_list = [s.split(' - ')[0] for s in skus.split(',')]
-    comp_list = [c.split(' - ')[0] for c in components.split(',')] if components else None
-    sub_list = [s.split(' - ')[0] for s in subcomponents.split(',')] if subcomponents else None
-    mat_list = [m.split(' - ')[0] for m in materials.split(',')] if materials else None
+# REMOVED: /api/filter-results - deprecated legacy route
+# REMOVED: /api/export-filter-results - deprecated legacy route
 
-    try:
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # STEP 1: If materials are selected, check flags and trigger ingestion (EXISTING LOGIC)
-        if mat_list:
-            app.logger.info(f"🔄 Checking flags for {len(mat_list)} materials before generating filter report...")
-            for material_id in mat_list:
-                flag_entry = db.session.query(PFASBOM.flag).filter_by(material=material_id).first()
-                if flag_entry and flag_entry.flag is False:
-                    app.logger.info(f"🔄 Flag is False for material {material_id}. Calling FastAPI /ingest...")
-                    fastapi_response = ingest_material_data(material_id)
-                    if fastapi_response and fastapi_response.get("success", False):
-                        should_set_flag_true = fastapi_response.get("flag", False)
-                        if should_set_flag_true:
-                            try:
-                                db.session.query(PFASBOM).filter_by(material=material_id).update({"flag": True})
-                                db.session.commit()
-                                app.logger.info(f"✅ Flag updated to True for material_id: {material_id}")
-                            except Exception as update_error:
-                                db.session.rollback()
-                                app.logger.error(f"⚠️ Failed to update flag for {material_id}: {update_error}")
-                        else:
-                            app.logger.info(f"ℹ️ Ingestion successful for {material_id}, but FastAPI flag=False. Database flag unchanged.")
-                    else:
-                        error_detail = "No response" if fastapi_response is None else fastapi_response.get("message", "Unknown error")
-                        app.logger.warning(f"⚠️ Ingestion NOT successful for material_id {material_id}. Reason: {error_detail}")
-        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        # STEP 2: Build and execute the main query (UNCHANGED)
-        query = db.session.query(
-            PFASBOM.sku,
-            PFASBOM.product,
-            PFASBOM.component,
-            PFASBOM.component_description,
-            PFASBOM.subcomponent,
-            PFASBOM.subcomponent_description,
-            PFASBOM.material,
-            PFASBOM.material_name,
-            PFASMaterialChemicals.chemical_name,
-            PFASMaterialChemicals.cas_number,
-            PFASMaterialChemicals.concentration_ppm,
-            PFASMaterialChemicals.supplier_name,
-            getattr(PFASRegulations, region).label("limit_value")
-        ).join(
-            PFASMaterialChemicals, PFASBOM.material == PFASMaterialChemicals.material_id
-        ).outerjoin(
-            PFASRegulations, PFASMaterialChemicals.cas_number == PFASRegulations.cas_number
-        ).filter(PFASBOM.sku.in_(sku_list))
-
-        if comp_list:
-            query = query.filter(PFASBOM.component.in_(comp_list))
-        if sub_list:
-            query = query.filter(PFASBOM.subcomponent.in_(sub_list))
-        if mat_list:
-            query = query.filter(PFASBOM.material.in_(mat_list))
-
-        results = query.all()
-
-        # STEP 3: Process results — UPDATED to handle "Unknown" and mark as Non-Compliant
-        data = []
-        for r in results:
-            # ✅ Handle concentration: if missing or invalid, set to None (will become "Unknown")
-            try:
-                conc = int(float(r.concentration_ppm)) if r.concentration_ppm is not None else None
-            except (ValueError, TypeError):
-                conc = None
-
-            limit = float(r.limit_value) if r.limit_value is not None else None
-
-            # 🚨 CRITICAL: If concentration is unknown, mark as NON-COMPLIANT
-            if conc is None:
-                status = "Non-Compliant"
-                color = "danger"
-            elif limit is None:
-                status = "No Data"
-                color = "warning"
-            elif limit < conc:
-                status = "Non-Compliant"
-                color = "danger"
-            else:
-                status = "Compliant"
-                color = "success"
-
-            data.append({
-                "sku": f"{r.sku} - {r.product}" if r.product else r.sku,
-                "component": f"{r.component} - {r.component_description}" if r.component_description else r.component,
-                "subcomponent": f"{r.subcomponent} - {r.subcomponent_description}" if r.subcomponent_description else r.subcomponent,
-                "material": r.material or "Unknown",                          # ✅ Fixed
-                "material_name": r.material_name or "Unknown",
-                "cas_number": r.cas_number or "Unknown",
-                "chemical_name": r.chemical_name or "Unknown",
-                "concentration": f"{int(conc)} ppm" if conc is not None else "Unknown",  # ✅ Show "Unknown"
-                "supplier_name": r.supplier_name or "Unknown",
-                "status": status,
-                "status_color": color
-            })
-
-        return jsonify({"data": data})
-
-    except Exception as e:
-        app.logger.error(f"Filter results error: {e}")
-        return jsonify({"data": []}), 500
-    
-@app.route('/api/export-filter-results', methods=['POST'])
-def export_filter_results():
-    """DEPRECATED: Legacy export route. PFASBOM table replaced by route + ppwr_bom."""
-    return jsonify({"error": "This export route is deprecated. PFASBOM table with component/subcomponent columns no longer exists. Use assessment page export buttons instead."}), 410
-    try:
-        app.logger.info("📥 Received export request")
-
-        payload = request.get_json()
-        if not payload or "filters" not in payload:
-            return jsonify({"error": "Missing filters in request"}), 400
-
-        filters = payload["filters"]
-        app.logger.info(f"🔍 Filters received: {filters}")
-
-        # Parse filters (strip " - description" if present)
-        skus = [s.split(" - ")[0] for s in filters.get("skus", [])]
-        components = [c.split(" - ")[0] for c in filters.get("components", [])]
-        subcomponents = [sc.split(" - ")[0] for sc in filters.get("subcomponents", [])]
-        materials = [m.split(" - ")[0] for m in filters.get("materials", [])]
-
-        if not skus:
-            return jsonify({"error": "No valid SKUs provided"}), 400
-
-        # Regulation columns to include
-        regulation_columns = [
-            "australian_aics",
-            "australian_imap_tier_2",
-            "canadian_dsl",
-            "canada_pctsr_2012",
-            "eu_reach_pre_registered",
-            "eu_reach_registered_ppm",
-            "us_epa_tscainventory",
-            "us_epa_tsca12b"
-        ]
-
-        # Build query
-        query = db.session.query(
-            PFASBOM.sku,
-            PFASBOM.product,
-            PFASBOM.component,
-            PFASBOM.component_description,
-            PFASBOM.subcomponent,
-            PFASBOM.subcomponent_description,
-            PFASBOM.material,
-            PFASBOM.material_name,
-            PFASMaterialChemicals.cas_number,
-            PFASMaterialChemicals.chemical_name,
-            PFASMaterialChemicals.concentration_ppm,
-            PFASMaterialChemicals.supplier_name,
-            PFASMaterialChemicals.reference_doc,
-            *[getattr(PFASRegulations, col) for col in regulation_columns]
-        ).join(
-            PFASMaterialChemicals, PFASBOM.material == PFASMaterialChemicals.material_id
-        ).outerjoin(
-            PFASRegulations, PFASMaterialChemicals.cas_number == PFASRegulations.cas_number
-        ).filter(PFASBOM.sku.in_(skus))
-
-        if components:
-            query = query.filter(PFASBOM.component.in_(components))
-        if subcomponents:
-            query = query.filter(PFASBOM.subcomponent.in_(subcomponents))
-        if materials:
-            query = query.filter(PFASBOM.material.in_(materials))
-
-        results = query.all()
-        app.logger.info(f"📊 Query returned {len(results)} rows")
-
-        if not results:
-            return jsonify({"error": "No matching records found"}), 400
-
-        # Convert query results → flat rows
-        rows = []
-        for r in results:
-            conc = int(float(r.concentration_ppm)) if r.concentration_ppm else 0.0
-
-            row = {
-                "SKU": r.sku or "",
-                "Product": r.product or "",
-                "Component": r.component or "",
-                "Component Description": r.component_description or "",
-                "Sub-Component": r.subcomponent or "",
-                "Sub-Component Description": r.subcomponent_description or "",
-                "Material ID": r.material or "",
-                "Material Name": r.material_name or "",
-                "CAS Number": r.cas_number or "Unknown",
-                "Chemical Name": r.chemical_name or "Unknown",
-                "Chemical Concentration": f"{int(conc)} ppm",
-                "Supplier Name": r.supplier_name or "Unknown",
-                "Reference": r.reference_doc or "",
-            }
-
-            # Add regulation thresholds + status
-            for col in regulation_columns:
-                threshold = getattr(r, col, None)
-                if threshold is None:
-                    row[col] = "No Data"
-                else:
-                    threshold_val = float(threshold)
-                    row[col] = f"{threshold_val} ppm"
-                    row[f"{col}_status"] = "exceeded" if conc > threshold_val else "within"
-
-            rows.append(row)
-
-        # Convert to DataFrame (ignore *_status for sheet layout)
-        df = pd.DataFrame([{k: v for k, v in row.items() if not k.endswith("_status")} for row in rows])
-
-        # Write Excel
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            df.to_excel(writer, sheet_name="Results", index=False)
-            ws = writer.sheets["Results"]
-
-            # Coloring
-            red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
-            green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
-
-            # Apply fills row by row
-            for i, row in enumerate(rows, start=2):  # Excel rows start at 2 (after header)
-                for col_idx, col in enumerate(regulation_columns, start=1):
-                    cell = ws.cell(row=i, column=df.columns.get_loc(col) + 1)
-                    status = row.get(f"{col}_status")
-                    if status == "exceeded":
-                        cell.fill = red_fill
-                    elif status == "within":
-                        cell.fill = green_fill
-
-            # Auto column width
-            for col_cells in ws.columns:
-                max_length = max(len(str(cell.value)) if cell.value else 0 for cell in col_cells)
-                ws.column_dimensions[col_cells[0].column_letter].width = min(max_length + 2, 50)
-
-        output.seek(0)
-        filename = f"PFAS_Filter_Report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M')}.xlsx"
-
-        app.logger.info(f"✅ Export successful: {len(rows)} rows exported")
-        return send_file(
-            output,
-            as_attachment=True,
-            download_name=filename,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-    except Exception as e:
-        app.logger.error(f"❌ Export failed: {e}", exc_info=True)
-        return jsonify({"error": "Export failed. Please try again."}), 500
-
-# Add these new routes to your app.py
+# REMOVED: Deprecated incomplete duplicate route from line 3222 (kept complete version below)
 
 # Add these new routes to your app.py (or replace the existing ones if duplicated)
 @app.route('/api/assessment-regions/<sku>')
@@ -3657,7 +3618,7 @@ def assessment_page(sku):
                     product_name = data.get("product", f"{sku}_PFAS")
                 
             elif requested_tab == 'ppwr':
-                # Load PPWR data from ppwr_bom + ppwr_assessments tables
+                # Load PPWR data from ppwr_bom + ppwr_result tables (unified RAG + manual data)
                 app.logger.info(f"Loading PPWR assessment for SKU {sku}")
                 
                 # Re-use PFAS data structure but apply strict rules
