@@ -1,0 +1,3 @@
+sku,product,component,component_description,subcomponent,subcomponent_description,material,material_name
+SKU-001,SampleProduct,A001,Primary Component,SUB1,Primary Subcomponent,8024,PET polybag
+SKU-001,SampleProduct,A001,Primary Component,SUB1,Primary Subcomponent,B7462,Paperboard

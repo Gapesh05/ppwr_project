@@ -1,0 +1,52 @@
+-- ============================================
+-- Table: PFAS_REGULATIONS
+-- ============================================
+
+CREATE TABLE pfas_regulations (
+    cas_number                  VARCHAR(255) PRIMARY KEY,
+    chemical_name               VARCHAR(500),
+    molecular_formula           VARCHAR(255),
+    structure_category_name     VARCHAR(255),
+    australian_aics             INTEGER,
+    australian_imap_tier_2      INTEGER,
+    canadian_dsl                INTEGER,
+    canada_pctsr_2012           INTEGER,
+    eu_reach_pre_registered     INTEGER,
+    eu_reach_registered_ppm     INTEGER,
+    us_epa_tscainventory        INTEGER,
+    us_epa_tsca12b              INTEGER
+);
+
+-- ============================================
+-- Table: PFAS_BOM
+-- ============================================
+
+CREATE TABLE pfas_bom (
+    sku                         VARCHAR(100) NOT NULL,
+    product                     VARCHAR(100) NOT NULL,
+    component                   VARCHAR(100) NOT NULL,
+    component_description       VARCHAR(100) NOT NULL,
+    subcomponent                VARCHAR(100) NOT NULL,
+    subcomponent_description    VARCHAR(100) NOT NULL,
+    material                    VARCHAR(100) NOT NULL,
+    material_name               VARCHAR(100) NOT NULL,
+    portal_name                 VARCHAR(100) NOT NULL,
+    region                      VARCHAR(100),
+    assessment                  VARCHAR(100),
+    flag                        BOOLEAN DEFAULT FALSE,  -- new flag column
+    PRIMARY KEY (sku, component, subcomponent, material)
+);
+
+-- ============================================
+-- Table: RESULT
+-- ============================================
+
+CREATE TABLE result (
+    material_id       VARCHAR(100) NOT NULL PRIMARY KEY,
+    material_name     VARCHAR(100),
+    cas_number        VARCHAR(255),  -- no foreign key now
+    chemical_name     VARCHAR(500),
+    concentration_ppm DECIMAL(10, 4),
+    supplier_name     VARCHAR(255),
+    reference_doc     VARCHAR(255)
+);

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PFAS Lookup - Material Compliance</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css  " rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css  " rel="stylesheet" />
+
+  <style>
+    body { 
+      background-color: #ffffff; 
+      color: #212529; 
+      font-family: 'Segoe UI', sans-serif; 
+      font-size: 1.05rem; /* ⬆ slightly bigger base font */
+    }
+    
+    /* Reusable Shadow Cards */
+    .card-shadow { 
+      background: #fff; 
+      border: 1px solid #e5e7eb; 
+      border-radius: 18px; /* ⬆ more rounded */
+      box-shadow: 0 5px 22px rgba(0,0,0,0.06); 
+      transition: all 0.3s ease; 
+      padding: 1.25rem; /* ⬆ extra padding */
+    }
+    .card-shadow:hover { 
+      transform: translateY(-3px); 
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1); 
+    }
+
+    /* Gradient Headers */
+    .bg-gradient-header { 
+      background: linear-gradient(90deg, #3B82F6, #8C69F0); 
+      color: white; 
+      border-radius: 18px 18px 0 0; 
+      padding: 1.25rem 1.75rem; /* ⬆ padding */
+    }
+    .bg-gradient-header h4 { 
+      margin: 0; 
+      font-weight: 600; 
+      font-size: 1.35rem; /* ⬆ heading size */
+    }
+
+    /* Buttons */
+    .btn { 
+      font-size: 1.05rem; /* ⬆ bigger text */
+      padding: 0.65rem 1.25rem; /* ⬆ button padding */
+      border-radius: 10px; 
+    }
+    .btn-primary { 
+      background: linear-gradient(90deg, #3B82F6, #8C69F0); 
+      border: none; 
+      min-width: 150px; /* Prevent layout shift during loading */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary:hover:not(:disabled) { 
+      opacity: 0.95; 
+      transform: scale(1.06); 
+      transition: all 0.2s ease; 
+    }
+    .btn-success { 
+      background: linear-gradient(90deg, #16a34a, #22c55e); 
+      border: none; 
+    }
+    .btn-success:hover { 
+      opacity: 0.95; 
+      transform: scale(1.06); 
+    }
+
+    /* Input Labels */
+    .input-group-text { 
+      background: #8C69F0; 
+      color: white; 
+      font-weight: 500; 
+      min-width: 160px; /* ⬆ wider */
+      text-align: center; 
+      border: none; 
+      border-radius: 12px 0 0 12px; 
+      font-size: 1.0rem; /* ⬆ bigger text */
+      padding: 0.65rem; /* ⬆ padding */
+    }
+    .form-select { 
+      font-size: 1rem; /* ⬆ bigger select */
+      padding: 0.55rem 0.75rem; 
+      border-radius: 8px; 
+    }
+
+    /* Spinner */
+    #PFASLookupLoading { display: none !important; }
+    .spinner-border.spin { width: 6.5rem; height: 6.5rem; margin: 0 auto; }
+
+    /* Table Styling */
+    table.table { 
+      border-radius: 14px; 
+      overflow: hidden; 
+      font-size: 1.0rem; /* ⬆ bigger table font */
+    }
+    table.table th { 
+      background: #f9fafb; 
+      font-weight: 600; 
+      font-size: 1.05rem; /* ⬆ */
+      padding: 0.85rem; 
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+    table.table th:hover {
+      background: #f1f5f9;
+    }
+    table.table th .sort-icon {
+      opacity: 0.4;
+      font-size: 0.8rem;
+      margin-left: 6px;
+    }
+    table.table th.sort-asc .sort-icon::after { content: '▲'; opacity: 1; }
+    table.table th.sort-desc .sort-icon::after { content: '▼'; opacity: 1; }
+    table.table td { 
+      padding: 0.8rem; 
+    }
+    table.table tbody tr { 
+      transition: background 0.2s ease, transform 0.2s ease; 
+    }
+    table.table tbody tr:hover { 
+      background: #f0f9ff; 
+      transform: translateY(-1px); 
+    }
+
+    /* Filter Card */
+    .filter-card { 
+      border-radius: 18px; 
+      padding: 18px; 
+      background: #fff; 
+      border: 1px solid #e5e7eb; 
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05); 
+    }
+    .filter-card h4 { 
+      font-weight: 600; 
+      color: #3B82F6; 
+      margin-bottom: 18px; 
+      font-size: 1.3rem; /* ⬆ heading size */
+    }
+
+    /* Search & Pagination */
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .search-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      flex-grow: 1;
+      max-width: 400px;
+    }
+    .search-input {
+      flex-grow: 1;
+      padding: 0.55rem 0.75rem;
+      font-size: 1.0rem;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+    }
+    .search-btn {
+      padding: 0.55rem 0.75rem;
+      background: #3B82F6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.0rem;
+    }
+    .search-btn:hover {
+      background: #2563eb;
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .pagination-btn {
+      padding: 0.4rem 0.7rem;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .pagination-btn:hover {
+      background: #f8f9fa;
+    }
+    .pagination-btn:disabled {
+      color: #adb5bd;
+      cursor: not-allowed;
+    }
+    .page-info {
+      margin: 0 0.5rem;
+      font-weight: 500;
+      color: #495057;
+    }
+
+    /* Disabled button style override */
+    .btn-primary:disabled,
+    .btn-primary.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ✅ RESULTS COUNTER — Already defined in your global styles, but included here for safety */
+    .results-counter {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 0 0 12px 12px;
+      border-top: none;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-align: center;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid px-3 py-4">
+  <div class="row g-4">
+    
+    <!-- LEFT COLUMN: Filters -->
+    <div class="col-lg-4">
+      <div class="card-shadow filter-card">
+        <h4 class="text-center">Filters</h4>
+
+        <!-- SKU - Product -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">SKU - Product</span>
+          <select id="SkuProductSelect" class="form-select" multiple></select>
+        </div>
+
+        <!-- Component -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">Component</span>
+          <select id="ComponentSelect" class="form-select" multiple></select>
+        </div>
+
+        <!-- Sub-Component -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">Sub-Component</span>
+          <select id="SubComponentSelect" class="form-select" multiple></select>
+        </div>
+
+        <!-- Material -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">Material</span>
+          <select id="MaterialSelect" class="form-select" multiple></select>
+        </div>
+
+        <!-- Region -->
+        <div class="input-group mb-3">
+          <span class="input-group-text">Region</span>
+          <select id="RegionSelect" class="form-select">
+            <option value="">-- Select Regulation --</option>
+            <option value="australian_aics">Australian AICS</option>
+            <option value="australian_imap_tier_2">Australian IMAP Tier 2</option>
+            <option value="canadian_dsl">Canadian DSL</option>
+            <option value="canada_pctsr_2012">Canada PCTSR 2012</option>
+            <option value="eu_reach_pre_registered">EU REACH Pre-registered</option>
+            <option value="eu_reach_registered_ppm">EU REACH Registered (PPM)</option>
+            <option value="us_epa_tscainventory">US EPA TSCA Inventory</option>
+            <option value="us_epa_tsca12b">US EPA TSCA 12b</option>
+          </select>
+        </div>
+
+        <!-- Report Button -->
+        <button id="GetPFASLookupbutton" class="btn btn-primary w-100 disabled" type="button">Generate Report</button>
+
+        <!-- Clear Button -->
+        <button id="clearFiltersBtn" class="btn btn-primary w-100 mt-2" type="button" disabled>Clear All Filters</button>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Results Table -->
+    <div class="col-lg-8">
+      <div class="card-shadow p-3">
+        <div class="bg-gradient-header d-flex justify-content-between mb-3">
+          <h4><i class="bi bi-search me-2"></i> PFAS Lookup Results</h4>
+          <a href="/" class="btn btn-light">← Back to Products</a>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="PFASLookupLoading" class="row h-100 d-flex align-items-center">
+          <div class="col text-center">
+            <div class="spinner-border spin text-primary" role="status"></div>
+            <p class="mt-3 fw-semibold text-muted">Generating compliance report...</p>
+          </div>
+        </div>
+
+        <!-- ✅ FIXED: Search Controls Outside Table Render Zone -->
+        <div id="tableControlsContainer" class="table-controls mb-3" style="display: none;">
+          <div class="search-wrapper">
+            <input type="text" class="search-input" placeholder="Search..." id="tableSearchInput" />
+          </div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" id="prevPage" disabled>< Prev</button>
+            <span class="page-info">Page <span id="currentPageDisplay">1</span> of <span id="totalPagesDisplay">1</span></span>
+            <button class="pagination-btn" id="nextPage">Next ></button>
+          </div>
+        </div>
+
+        <!-- Table Body Only -->
+        <div id="tableBodyContainer"></div>
+
+        <!-- ✅ RESULTS COUNTER — ADDED HERE -->
+        <div class="results-counter" id="resultsCounter">
+          Showing 0 of 0 results
+        </div>
+
+        <!-- Export Button -->
+        <div class="export-container mt-3 text-end" id="exportSection" style="display: none;">
+          <button id="exportBtn" class="btn btn-success">
+            <i class="bi bi-download"></i> Export to Excel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js  "></script>
+
+<script>
+  // DOM Elements
+  const skuSelect = document.getElementById("SkuProductSelect");
+  const componentSelect = document.getElementById("ComponentSelect");
+  const subComponentSelect = document.getElementById("SubComponentSelect");
+  const materialSelect = document.getElementById("MaterialSelect");
+  const regionSelect = document.getElementById("RegionSelect");
+  const reportBtn = document.getElementById("GetPFASLookupbutton");
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+  const loadingDiv = document.getElementById("PFASLookupLoading");
+  const tableControlsContainer = document.getElementById("tableControlsContainer");
+  const tableBodyContainer = document.getElementById("tableBodyContainer");
+  const exportSection = document.getElementById("exportSection");
+  const exportBtn = document.getElementById("exportBtn");
+  const resultsCounter = document.getElementById("resultsCounter"); // ✅ NEW REF
+
+  let currentExportData = [];
+  let currentFilters = {};
+  let currentPage = 1;
+  const itemsPerPage = 4;
+  let sortColumn = null;
+  let sortDirection = 'asc';
+  let searchQuery = '';
+
+  // Helper: Generate loading UI for table container
+  function getTableLoadingHtml() {
+    return `
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+        <p class="mt-3 text-muted">Loading data...</p>
+      </div>
+    `;
+  }
+
+  // Toggle Generate Report button (requires SKU and Region)
+  function toggleReportButton() {
+    const hasSku = skuSelect.selectedOptions.length > 0;
+    const hasRegion = regionSelect.value !== "";
+    const shouldBeEnabled = hasSku && hasRegion;
+
+    reportBtn.disabled = !shouldBeEnabled;
+    if (shouldBeEnabled) {
+      reportBtn.classList.remove("disabled");
+    } else {
+      reportBtn.classList.add("disabled");
+    }
+  }
+
+  // Toggle Clear Filters button (enabled if any filter is set)
+  function toggleClearButton() {
+    const hasAnyFilter =
+      skuSelect.selectedOptions.length > 0 ||
+      componentSelect.selectedOptions.length > 0 ||
+      subComponentSelect.selectedOptions.length > 0 ||
+      materialSelect.selectedOptions.length > 0 ||
+      regionSelect.value !== "";
+    clearFiltersBtn.disabled = !hasAnyFilter;
+  }
+
+  async function loadSkus() {
+    try {
+      const res = await fetch("/api/skus");
+      const data = await res.json();
+      skuSelect.innerHTML = "";
+      data.skus.forEach(skuStr => {
+        const opt = document.createElement("option");
+        opt.value = skuStr;
+        opt.textContent = skuStr;
+        skuSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.error("Failed to load SKUs:", e);
+    } finally {
+      toggleReportButton();
+      toggleClearButton();
+    }
+  }
+
+  async function loadComponents() {
+    const skus = Array.from(skuSelect.selectedOptions).map(o => o.value);
+    if (skus.length === 0) {
+      componentSelect.innerHTML = "";
+      return;
+    }
+    const params = new URLSearchParams({ skus: skus.join(',') });
+    try {
+      const res = await fetch(`/api/components?${params}`);
+      const data = await res.json();
+      componentSelect.innerHTML = "";
+      data.components.forEach(comp => {
+        const opt = document.createElement("option");
+        opt.value = comp;
+        opt.textContent = comp;
+        componentSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.error("Failed to load components:", e);
+    } finally {
+      toggleClearButton();
+    }
+  }
+
+  async function loadSubComponents() {
+    const skus = Array.from(skuSelect.selectedOptions).map(o => o.value);
+    const comps = Array.from(componentSelect.selectedOptions).map(o => o.value);
+    if (skus.length === 0 || comps.length === 0) {
+      subComponentSelect.innerHTML = "";
+      return;
+    }
+    const params = new URLSearchParams({
+      skus: skus.join(','),
+      components: comps.join(',')
+    });
+    try {
+      const res = await fetch(`/api/subcomponents?${params}`);
+      const data = await res.json();
+      subComponentSelect.innerHTML = "";
+      data.subcomponents.forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.textContent = sub;
+        subComponentSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.error("Failed to load subcomponents:", e);
+    } finally {
+      toggleClearButton();
+    }
+  }
+
+  async function loadMaterials() {
+    const skus = Array.from(skuSelect.selectedOptions).map(o => o.value);
+    const comps = Array.from(componentSelect.selectedOptions).map(o => o.value);
+    const subs = Array.from(subComponentSelect.selectedOptions).map(o => o.value);
+    if (skus.length === 0) return;
+
+    const params = new URLSearchParams({
+      skus: skus.join(','),
+      components: comps.join(','),
+      subcomponents: subs.join(',')
+    });
+    try {
+      const res = await fetch(`/api/materials?${params}`);
+      const data = await res.json();
+      materialSelect.innerHTML = "";
+      data.materials.forEach(mat => {
+        const opt = document.createElement("option");
+        opt.value = mat;
+        opt.textContent = mat;
+        materialSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.error("Failed to load materials:", e);
+    } finally {
+      toggleClearButton();
+    }
+  }
+
+  // Attach event listeners with both toggles
+  skuSelect.addEventListener("change", () => {
+    loadComponents();
+    toggleReportButton();
+    toggleClearButton();
+  });
+  componentSelect.addEventListener("change", () => {
+    loadSubComponents();
+    toggleReportButton();
+    toggleClearButton();
+  });
+  subComponentSelect.addEventListener("change", () => {
+    loadMaterials();
+    toggleReportButton();
+    toggleClearButton();
+  });
+  materialSelect.addEventListener("change", () => {
+    toggleReportButton();
+    toggleClearButton();
+  });
+  regionSelect.addEventListener("change", () => {
+    toggleReportButton();
+    toggleClearButton();
+  });
+
+  // ✅ Render table with loading state + results counter
+  function renderTable(data) {
+    // Show loading UI immediately
+    tableBodyContainer.innerHTML = getTableLoadingHtml();
+
+    // Allow DOM to update before heavy processing
+    setTimeout(() => {
+      const totalRecords = data.length;
+
+      const filteredData = data.filter(row =>
+        Object.values(row).some(val =>
+          String(val).toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
+
+      const filteredCount = filteredData.length;
+
+      if (sortColumn) {
+        filteredData.sort((a, b) => {
+          const valA = String(a[sortColumn] ?? '').toLowerCase();
+          const valB = String(b[sortColumn] ?? '').toLowerCase();
+          if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+          if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      const totalPages = Math.ceil(filteredCount / itemsPerPage);
+      currentPage = Math.min(currentPage, totalPages) || 1;
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+      const shownCount = paginatedData.length;
+
+      // Render table
+      let tableHtml = `
+        <table class="table table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th data-col="cas_number">CAS Number <span class="sort-icon"></span></th>
+              <th data-col="chemical_name">Chemical Name <span class="sort-icon"></span></th>
+              <th data-col="concentration">Chemical Concentration <span class="sort-icon"></span></th>
+              <th data-col="material">Material ID <span class="sort-icon"></span></th>
+              <th data-col="material_name">Material Name <span class="sort-icon"></span></th>
+              <th data-col="supplier_name">Supplier Name <span class="sort-icon"></span></th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      if (paginatedData.length === 0) {
+        tableHtml += `<tr><td colspan="6" class="text-center text-muted">No results found</td></tr>`;
+      } else {
+        paginatedData.forEach(r => {
+          const concColor = r.status_color === 'danger' ? 'text-danger' : 'text-success';
+          tableHtml += `
+            <tr>
+              <td>${r.cas_number}</td>
+              <td>${r.chemical_name}</td>
+              <td><strong class="${concColor}">${r.concentration}</strong></td>
+              <td>${r.material}</td>
+              <td>${r.material_name}</td>
+              <td>${r.supplier_name}</td>
+            </tr>
+          `;
+        });
+      }
+
+      tableHtml += `</tbody></table>`;
+      tableBodyContainer.innerHTML = tableHtml;
+
+      // Update pagination
+      document.getElementById("currentPageDisplay").textContent = currentPage;
+      document.getElementById("totalPagesDisplay").textContent = totalPages || 1;
+      document.getElementById("prevPage").disabled = currentPage <= 1;
+      document.getElementById("nextPage").disabled = currentPage >= totalPages;
+
+      // Setup sorting
+      const headers = tableBodyContainer.querySelectorAll('th[data-col]');
+      headers.forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (th.dataset.col === sortColumn) {
+          th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+        const newTh = th.cloneNode(true);
+        th.parentNode.replaceChild(newTh, th);
+        newTh.addEventListener('click', () => {
+          if (sortColumn === newTh.dataset.col) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortColumn = newTh.dataset.col;
+            sortDirection = 'asc';
+          }
+          currentPage = 1;
+          renderTable(currentExportData);
+        });
+      });
+
+      // ✅ UPDATE RESULTS COUNTER
+      let counterText = '';
+      if (totalRecords === 0) {
+        counterText = 'No results available';
+      } else if (searchQuery && filteredCount !== totalRecords) {
+        counterText = `Showing ${shownCount} of ${filteredCount} filtered results (${totalRecords} total)`;
+      } else {
+        counterText = `Showing ${shownCount} of ${totalRecords} results`;
+      }
+      resultsCounter.textContent = counterText;
+
+    }, 50);
+  }
+
+  // Initialize search and pagination
+  function initializeSearchAndPagination() {
+    const searchInput = document.getElementById('tableSearchInput');
+
+    searchInput.addEventListener("input", () => {
+      const newQuery = searchInput.value.trim();
+      if (newQuery !== searchQuery) {
+        searchQuery = newQuery;
+        currentPage = 1;
+        renderTable(currentExportData);
+      }
+    });
+
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const newQuery = searchInput.value.trim();
+        if (newQuery !== searchQuery) {
+          searchQuery = newQuery;
+          currentPage = 1;
+          renderTable(currentExportData);
+        }
+      }
+    });
+
+    document.getElementById('prevPage')?.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable(currentExportData);
+      }
+    });
+
+    document.getElementById('nextPage')?.addEventListener('click', () => {
+      const filteredData = currentExportData.filter(row =>
+        Object.values(row).some(val =>
+          String(val).toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable(currentExportData);
+      }
+    });
+  }
+
+  // Generate Report Button — ✅ ENHANCED WITH LOADING STATE
+  reportBtn.addEventListener("click", async function () {
+    if (reportBtn.disabled) return;
+
+    // Disable button + show spinner inside button
+    reportBtn.disabled = true;
+    reportBtn.classList.add("disabled");
+    reportBtn.innerHTML = `
+      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      &nbsp; Generating...
+    `;
+
+    // Reset search and UI state
+    searchQuery = '';
+    loadingDiv.style.display = "flex";
+    tableControlsContainer.style.display = "none";
+    tableBodyContainer.innerHTML = getTableLoadingHtml();
+    resultsCounter.textContent = "Showing 0 of 0 results"; // ✅ Reset counter
+    exportSection.style.display = "none";
+    currentExportData = [];
+    currentFilters = {};
+
+    currentFilters = {
+      skus: Array.from(skuSelect.selectedOptions).map(o => o.value),
+      components: Array.from(componentSelect.selectedOptions).map(o => o.value),
+      subcomponents: Array.from(subComponentSelect.selectedOptions).map(o => o.value),
+      materials: Array.from(materialSelect.selectedOptions).map(o => o.value),
+      region: regionSelect.options[regionSelect.selectedIndex]?.text || "No Data"
+    };
+
+    const params = new URLSearchParams({
+      skus: currentFilters.skus.map(s => s.split(' - ')[0]).join(','),
+      components: currentFilters.components.join(','),
+      subcomponents: currentFilters.subcomponents.join(','),
+      materials: currentFilters.materials.join(','),
+      region: regionSelect.value
+    });
+
+    try {
+      const res = await fetch(`/api/filter-results?${params}`);
+      const data = await res.json();
+
+      if (!data.data || data.data.length === 0) {
+        tableBodyContainer.innerHTML = "<p class='text-muted'>No matching records found.</p>";
+        resultsCounter.textContent = "No results found"; // ✅ Update counter
+        return;
+      }
+
+      currentExportData = data.data;
+      currentPage = 1;
+      sortColumn = null;
+      sortDirection = 'asc';
+
+      // Show controls
+      tableControlsContainer.style.display = "flex";
+      document.getElementById('tableSearchInput').value = '';
+
+      // Initialize search/pagination if not done already
+      if (!window.searchInitialized) {
+        initializeSearchAndPagination();
+        window.searchInitialized = true;
+      }
+
+      renderTable(currentExportData);
+      exportSection.style.display = "block";
+
+    } catch (e) {
+      console.error(e);
+      tableBodyContainer.innerHTML = "<p class='text-danger'>Error loading results.</p>";
+      resultsCounter.textContent = "Error loading results"; // ✅ Update counter
+    } finally {
+      // Always re-enable button and restore text
+      loadingDiv.style.display = "none";
+      reportBtn.disabled = false;
+      reportBtn.classList.remove("disabled");
+      reportBtn.innerHTML = "Generate Report";
+    }
+  });
+
+  // Export Button
+  exportBtn.addEventListener("click", async function () {
+    if (currentExportData.length === 0) return;
+    const exportPayload = { filters: currentFilters };
+    try {
+      loadingDiv.style.display = "flex";
+      tableBodyContainer.style.opacity = "0.5";
+      const response = await fetch("/api/export-filter-results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(exportPayload)
+      });
+      if (!response.ok) throw new Error("Export failed");
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const filenameMatch = contentDisposition?.match(/filename="?(.+)"?/);
+      const now = new Date().toISOString().slice(0,19).replace("T","_").replace(/:/g,"-");
+      const filename = filenameMatch ? filenameMatch[1] : `PFAS_Report_${now}.xlsx`;
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Export failed. Try again later.");
+    } finally {
+      loadingDiv.style.display = "none";
+      tableBodyContainer.style.opacity = "1";
+    }
+  });
+
+  // Clear Filters Button
+  clearFiltersBtn.addEventListener("click", function () {
+    // Clear all selects
+    skuSelect.innerHTML = "";
+    componentSelect.innerHTML = "";
+    subComponentSelect.innerHTML = "";
+    materialSelect.innerHTML = "";
+    regionSelect.value = "";
+
+    // Reset state
+    currentExportData = [];
+    currentFilters = {};
+    searchQuery = '';
+    currentPage = 1;
+    sortColumn = null;
+    sortDirection = 'asc';
+
+    // UI updates
+    loadingDiv.style.display = "none";
+    tableControlsContainer.style.display = "none";
+    tableBodyContainer.innerHTML = getTableLoadingHtml();
+    resultsCounter.textContent = "Showing 0 of 0 results"; // ✅ Reset counter
+    exportSection.style.display = "none";
+
+    // After brief loading, show message
+    setTimeout(() => {
+      tableBodyContainer.innerHTML = "<p class='text-muted'>Filters cleared. Select new criteria to generate a report.</p>";
+      resultsCounter.textContent = "No filters applied"; // ✅ Update counter
+    }, 300);
+
+    // Reload SKUs and update button states
+    loadSkus();
+  });
+
+  // Initialize
+  loadSkus();
+</script>
+
+</body>
+</html>

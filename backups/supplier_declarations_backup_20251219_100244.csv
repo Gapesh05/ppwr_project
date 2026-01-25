@@ -1,0 +1,13 @@
+id,sku,material_id,original_filename,document_type,upload_date,file_size,file_data,supplier_name,description,metadata_json,is_archived,file_hash
+68,A7658_SKU,,A7658_PETG.pdf,pdf,2025-12-17 10:23:34.425271,1104381,<memory at 0x0000024B54EC5F00>,Demo Supplier,Duplicate mapping test,,False,
+57,,,A7658_PETG.pdf,pdf,2025-12-17 09:41:04.670778,1104381,<memory at 0x0000024B54EC4D00>,,Bulk reload from New folder (2),,False,
+58,,,A8362_1073B Tyvek.pdf,pdf,2025-12-17 09:41:04.671338,155802,<memory at 0x0000024B5AD3E740>,,Bulk reload from New folder (2),,False,
+59,,,B7346_PE.pdf,pdf,2025-12-17 09:41:04.672457,122741,<memory at 0x0000024B5AD3E980>,,Bulk reload from New folder (2),,False,
+60,,,B7462_Paperboard.pdf,pdf,2025-12-17 09:41:04.673164,195785,<memory at 0x0000024B5AD3EA40>,,Bulk reload from New folder (2),,False,
+61,,,C7236_PP Film.pdf,pdf,2025-12-17 09:41:04.674191,266172,<memory at 0x0000024B5AD3EB00>,,Bulk reload from New folder (2),,False,
+62,,,C9347_Corrugated Fiberboard.pdf,pdf,2025-12-17 09:41:04.674709,694209,<memory at 0x0000024B5AD3EBC0>,,Bulk reload from New folder (2),,False,
+63,,,D7282_Paper Stock 1.pdf,pdf,2025-12-17 09:41:04.674709,195683,<memory at 0x0000024B5AD3EC80>,,Bulk reload from New folder (2),,False,
+64,,,E6236_Polystyrene.pdf,pdf,2025-12-17 09:41:04.675800,42423,<memory at 0x0000024B5AD3ED40>,,Bulk reload from New folder (2),,False,
+65,,,E9371_Paper Stock 2.pdf,pdf,2025-12-17 09:41:04.676734,195683,<memory at 0x0000024B5AD3EE00>,,Bulk reload from New folder (2),,False,
+66,,,F4373_LLDPE Film.pdf,pdf,2025-12-17 09:41:04.677729,702859,<memory at 0x0000024B5AD3EEC0>,,Bulk reload from New folder (2),,False,
+67,,,F8990_BOPP.pdf,pdf,2025-12-17 09:41:04.677729,147929,<memory at 0x0000024B5AD3EF80>,,Bulk reload from New folder (2),,False,
