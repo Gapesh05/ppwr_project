@@ -1,0 +1,37 @@
+# config.py
+import os
+
+class Config:
+    """Configuration.
+
+    Allows overriding the database with the environment variable DATABASE_URL.
+    If DATABASE_URL is not set, falls back to the existing PostgreSQL connection.
+    This makes it easy to point the app at a local sqlite DB for testing inside
+    Docker without changing the code further.
+    """
+    DB_USER =  'YOUR_DATABASE_USER'
+    DB_PASSWORD = 'YOUR_DATABASE_PASSWORD'
+    DB_HOST = 'YOUR_DATABASE_HOST'     # host / IP address (e.g., '10.134.44.228' or 'localhost')
+    DB_PORT = 5432
+    DB_NAME = 'YOUR_DATABASE_NAME'
+
+    # Base Postgres DSN
+    default_pg = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    # Primary DB used for PFAS/BOM data. Prevent accidental SQLite usage
+    # from an environment override which has been causing open-file errors.
+    env_db = os.environ.get('DATABASE_URL')
+    if env_db and env_db.startswith('postgresql'):
+        SQLALCHEMY_DATABASE_URI = env_db
+    else:
+        SQLALCHEMY_DATABASE_URI = default_pg
+    # Separate DB for supplier declarations (allows pointing declarations at a
+    # different Postgres instance). If not set, falls back to the primary DB.
+    SUPPLIER_DATABASE_URL = os.environ.get('SUPPLIER_DATABASE_URL', SQLALCHEMY_DATABASE_URI)
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # FastAPI Backend
+    FASTAPI_BASE_URL = os.environ.get('FASTAPI_BASE_URL', 'http://localhost:8000')
+
+    # File Upload Settings
+    UPLOAD_FOLDER = 'uploads/supplier_declarations'
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size

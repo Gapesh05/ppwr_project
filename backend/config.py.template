@@ -1,0 +1,98 @@
+import logging
+import sys
+import os
+from typing import Dict, Any, Optional
+
+# -------------------------
+# CONFIGURATION DATA
+# -------------------------
+CONFIG = {
+    "upload_folder": "shared_data/uploads/",
+    "archive_folder": "shared_data/archive/",
+    "input_template_folder": "shared_data/input_templates/",
+    "download_template_folder": "shared_data/output_templates/",
+    "sotafile_path": "shared_data/sota/",
+
+    "storage": {
+        "chroma": {
+            "host": "YOUR_CHROMA_HOST",  # e.g., "10.134.44.228" or "localhost"
+            "port": 8000,
+            "collection_name": "PFAS_10110_PFAS",
+            "ppwr_collection_name": "PPWR_Supplier_Declarations"
+        },
+        "chunking": {
+            "size": 300,
+            "overlap": 50
+        },
+        "postgresql": {
+            "host": "YOUR_POSTGRES_HOST",  # e.g., "10.134.44.228" or "localhost"
+            "port": "5432",
+            "dbname": "YOUR_DATABASE_NAME",
+            "user": "YOUR_DATABASE_USER",
+            "password": "YOUR_DATABASE_PASSWORD"
+        }
+    },
+    
+    "embeddings": {
+        "backend": "azure",
+        "azure": {
+            "model": "text-embedding-3-large",
+            "model_version": "2023-05-15",
+            "base_url": "YOUR_AZURE_OPENAI_ENDPOINT",  # e.g., "https://your-resource.openai.azure.com/"
+            "api_key": "YOUR_AZURE_OPENAI_API_KEY",
+            "deployment_name": "text-embedding-3-large",
+            "api_type": "azure"
+        }
+    },
+
+    "llms": {
+        "azure": {
+            "api_key": "YOUR_AZURE_OPENAI_API_KEY",
+            "base_url": "YOUR_AZURE_OPENAI_ENDPOINT",
+            "api_version": "2024-10-21",
+            "deployment_name": "gpt-4o",
+            "model_name": "gpt-4o"
+        }
+    },
+    
+    "ocr": {
+        "backend": "easyocr",
+        "easyocr": {
+            "languages": ["en"],
+            "gpu": False
+        }
+    }
+}
+
+# -------------------------
+# LOGGING
+# -------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+def get_config() -> Dict[str, Any]:
+    """Return the configuration dictionary."""
+    return CONFIG
+
+def get_storage_config() -> Dict[str, Any]:
+    """Return storage configuration."""
+    return CONFIG.get("storage", {})
+
+def get_embeddings_config() -> Dict[str, Any]:
+    """Return embeddings configuration."""
+    return CONFIG.get("embeddings", {})
+
+def get_llm_config() -> Dict[str, Any]:
+    """Return LLM configuration."""
+    return CONFIG.get("llms", {})
+
+def get_ocr_config() -> Dict[str, Any]:
+    """Return OCR configuration."""
+    return CONFIG.get("ocr", {})

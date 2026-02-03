@@ -1,0 +1,55 @@
+# Sensitive Configuration Files
+config.py
+docker-compose.yml
+.env
+*.env
+.env.*
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+*.log.*
+backend_logs.txt
+standalone_results.txt
+standalone_test_output.txt
+
+# Temporary Files
+tmp_*/
+*.tmp
+*.bak
+*.backup
+rendered_output.html
+
+# Data and Uploads
+uploads/
+data/
+supplier_declarations/
+shared_data/
+
+# Testing and Scripts
+test_*.py
+check_*.py
+verify_*.py
+scripts/
+tests/
+
+# Documentation (optional - uncomment if you don't want to track docs)
+# *.md
+# *.txt

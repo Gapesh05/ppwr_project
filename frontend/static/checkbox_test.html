@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Checkbox Material_ID Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .test-box { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .checkbox-row { padding: 10px; border-bottom: 1px solid #eee; }
+        .checkbox-row:hover { background: #f9f9f9; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; font-size: 14px; }
+        .btn-test { background: #007bff; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
+        .results { background: #f8f9fa; padding: 15px; margin-top: 10px; border-left: 4px solid #28a745; }
+        pre { background: #263238; color: #aed581; padding: 15px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1> Checkbox Material_ID Verification Test</h1>
+    
+    <div class="test-box">
+        <h3>Sample PPWR Materials (Checkboxes)</h3>
+        <div class="checkbox-row">
+            <input type="checkbox" class="ppwr-select-checkbox" data-material="A123" data-index="0">
+            <label>Material A123 - Tyvek Sheet</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" class="ppwr-select-checkbox" data-material="B456" data-index="1">
+            <label>Material B456 - Plastic Housing</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" class="ppwr-select-checkbox" data-material="C789" data-index="2">
+            <label>Material C789 - Rubber Gasket</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" class="ppwr-select-checkbox" data-material="MAT001" data-index="3">
+            <label>Material MAT001 - Steel Component</label>
+        </div>
+    </div>
+
+    <div class="test-box">
+        <h3>Test Actions</h3>
+        <button class="btn-test" onclick="testCheckboxAttributes()">1. Test Checkbox Attributes</button>
+        <button class="btn-test" onclick="testSelection()">2. Test Selection</button>
+        <button class="btn-test" onclick="testBulkAction()">3. Test Bulk Action Material IDs</button>
+        <button class="btn-delete" onclick="testDeleteSimulation()">4. Simulate Delete Action</button>
+    </div>
+
+    <div class="test-box">
+        <h3>Test Results</h3>
+        <div id="results" class="results">
+            <p><em>Run tests above to see results...</em></p>
+        </div>
+    </div>
+
+    <script>
+        function log(message, data = null) {
+            const resultsDiv = document.getElementById('results');
+            let output = '<strong>' + message + '</strong><br>';
+            if (data) {
+                output += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            }
+            resultsDiv.innerHTML += output;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function testCheckboxAttributes() {
+            clearResults();
+            log(' TEST 1: Checkbox Attributes');
+            
+            const checkboxes = document.querySelectorAll('.ppwr-select-checkbox');
+            log('Total checkboxes found: ' + checkboxes.length);
+            
+            const results = [];
+            checkboxes.forEach((cb, index) => {
+                results.push({
+                    index: index,
+                    'getAttribute(data-material)': cb.getAttribute('data-material'),
+                    'dataset.material': cb.dataset.material,
+                    'data-index': cb.getAttribute('data-index')
+                });
+            });
+            log('Checkbox attributes:', results);
+        }
+
+        function testSelection() {
+            clearResults();
+            log(' TEST 2: Selection Test');
+            
+            // Check first two checkboxes
+            const checkboxes = document.querySelectorAll('.ppwr-select-checkbox');
+            checkboxes[0].checked = true;
+            checkboxes[1].checked = true;
+            
+            const selected = document.querySelectorAll('.ppwr-select-checkbox:checked');
+            log('Checked ' + selected.length + ' checkboxes');
+            
+            const materials = Array.from(selected).map(cb => cb.dataset.material);
+            log('Selected material_ids:', materials);
+        }
+
+        function testBulkAction() {
+            clearResults();
+            log(' TEST 3: Bulk Action Material IDs');
+            
+            const checked = document.querySelectorAll('.ppwr-select-checkbox:checked');
+            if (checked.length === 0) {
+                log(' No checkboxes selected. Please check some boxes first.');
+                return;
+            }
+            
+            // This is exactly how the frontend code reads material_ids
+            const materialIds = Array.from(checked).map(cb => cb.dataset.material).filter(Boolean);
+            
+            log('Material IDs for bulk action:', materialIds);
+            log('Would send to API:', {
+                action: 'delete',
+                sku: 'SKU123',
+                material_ids: materialIds
+            });
+        }
+
+        function testDeleteSimulation() {
+            clearResults();
+            log(' TEST 4: Delete Action Simulation');
+            
+            const checked = document.querySelectorAll('.ppwr-select-checkbox:checked');
+            if (checked.length === 0) {
+                log(' No checkboxes selected. Please check some boxes first.');
+                return;
+            }
+            
+            const materialIds = Array.from(checked).map(cb => cb.dataset.material).filter(Boolean);
+            
+            log(' Simulating DELETE request...');
+            log('Endpoint: POST /api/ppwr/bulk-action');
+            log('Payload:', {
+                action: 'delete',
+                sku: 'SKU123',
+                material_ids: materialIds
+            });
+            log(' Material IDs correctly captured from checkboxes!');
+            log('Backend would receive: ' + materialIds.join(', '));
+        }
+    </script>
+</body>
+</html>
